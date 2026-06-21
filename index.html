@@ -1,0 +1,724 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sterk Bord">
+<title>Sterk Bord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EFE4;--surface:#FBF9F1;--ink:#20261C;--ink-soft:#5A6150;
+    --olive:#3E5230;--olive-soft:#6B7F4E;--saffron:#D8961E;--saffron-deep:#B57913;
+    --aubergine:#5A3A4A;--line:#DAD5C4;
+    --shadow:0 1px 2px rgba(32,38,28,.06),0 8px 24px rgba(32,38,28,.07);
+    --serif:'Fraunces',Georgia,serif;--sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --mono:'Space Mono',ui-monospace,Menlo,monospace;--nav:66px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.5;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  input{font-family:inherit}
+  ::selection{background:var(--saffron);color:#fff}
+
+  header{position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--line);padding:calc(13px + env(safe-area-inset-top)) 18px 11px}
+  .wordmark{display:flex;align-items:baseline;gap:9px}
+  .wordmark h1{font-family:var(--serif);font-weight:800;font-size:25px;letter-spacing:-.02em;margin:0;line-height:1;color:var(--olive)}
+  .wordmark .dot{width:7px;height:7px;border-radius:50%;background:var(--saffron);transform:translateY(-2px)}
+  .tagline{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--ink-soft);margin-top:5px;text-transform:lowercase}
+
+  .search{margin-top:12px;position:relative}
+  .search input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--line);border-radius:13px;background:var(--surface);font-size:16px;color:var(--ink)}
+  .search input:focus{outline:2px solid var(--olive-soft);outline-offset:-1px;border-color:transparent}
+  .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-soft)}
+
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:11px 18px 4px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:500;color:var(--ink-soft);white-space:nowrap}
+  .chip[aria-pressed="true"]{background:var(--olive);color:#fff;border-color:var(--olive)}
+  .chip.fav[aria-pressed="true"]{background:var(--aubergine);border-color:var(--aubergine)}
+
+  main{padding:6px 18px calc(var(--nav) + 24px);max-width:780px;margin:0 auto}
+  .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin:10px 2px 12px;letter-spacing:.02em}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  @media(min-width:620px){.grid{grid-template-columns:1fr 1fr 1fr}}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow);transition:transform .12s}
+  .card:active{transform:scale(.98)}
+  .tile{height:88px;display:flex;align-items:center;justify-content:center;position:relative;background:linear-gradient(140deg,hsl(var(--h) 48% 87%),hsl(var(--h) 44% 75%))}
+  .tile.hasphoto{background-size:cover;background-position:center}
+  .tile.hasphoto::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3),transparent 48%)}
+  .tile .emo{font-size:42px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.12))}
+  .tile .serves{position:absolute;top:7px;left:8px;background:rgba(255,255,255,.78);color:var(--ink);font-family:var(--mono);font-size:10px;font-weight:700;border-radius:6px;padding:2px 6px}
+  .tile .heart{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.78);display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+  .tile .heart[data-on="true"]{background:var(--aubergine);color:#fff}
+  .card-in{padding:11px 12px 12px}
+  .card .kicker{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--saffron-deep);font-weight:700}
+  .card h2{font-family:var(--serif);font-weight:600;font-size:15.5px;line-height:1.2;margin:4px 0 8px;letter-spacing:-.01em}
+  .mini{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--ink-soft)}
+  .mini .p{background:var(--olive);color:#fff;border-radius:6px;padding:2px 6px;font-weight:700}
+  .mini .af{color:var(--saffron-deep);font-weight:700}
+  .btn-list{margin-top:10px;width:100%;border:1px solid var(--line);border-radius:10px;padding:7px;font-size:12px;font-weight:600;color:var(--olive);background:var(--paper);display:flex;align-items:center;justify-content:center;gap:5px}
+  .btn-list[data-on="true"]{background:var(--olive);color:#fff;border-color:var(--olive)}
+
+  .empty{text-align:center;padding:54px 20px;color:var(--ink-soft)}
+  .empty .em-title{font-family:var(--serif);font-size:21px;color:var(--ink);margin-bottom:6px}
+
+  /* sheets */
+  .sheet-bg{position:fixed;inset:0;background:rgba(32,38,28,.42);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+  .sheet-bg.open{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;inset:0;z-index:70;background:var(--paper);overflow-y:auto;transform:translateY(100%);transition:transform .26s cubic-bezier(.32,.72,0,1);-webkit-overflow-scrolling:touch}
+  .sheet.open{transform:translateY(0)}
+  #sheet{z-index:80}
+  #sheet-bg{z-index:75}
+  .picklist li[data-open]{cursor:pointer}
+  .sheet-top{position:sticky;top:0;background:var(--paper);z-index:5;padding:calc(12px + env(safe-area-inset-top)) 18px 12px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center}
+  .back{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:600;color:var(--olive)}
+  .sheet-body{padding:0 0 120px;max-width:680px;margin:0 auto}
+  .det-tile{height:150px;display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,hsl(var(--h) 48% 87%),hsl(var(--h) 44% 74%));position:relative}
+  .det-tile.hasphoto{background-size:cover;background-position:center}
+  .camrow{position:absolute;right:12px;bottom:12px;display:flex;gap:8px}
+  .cambtn{background:rgba(255,255,255,.93);color:var(--olive);border-radius:11px;padding:9px 13px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 2px 9px rgba(0,0,0,.22)}
+  .camdel{background:rgba(255,255,255,.93);color:var(--aubergine);border-radius:11px;width:40px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 9px rgba(0,0,0,.22)}
+  .pemo.hasphoto{background-size:cover !important;background-position:center;font-size:0}
+  .det-tile .emo{font-size:78px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.13))}
+  .det-pad{padding:18px 20px 0}
+  .det-pad .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--saffron-deep);font-weight:700}
+  .det-pad h2{font-family:var(--serif);font-weight:600;font-size:27px;line-height:1.13;letter-spacing:-.02em;margin:7px 0 14px}
+  .stat-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-family:var(--mono);text-align:center;min-width:60px;flex:1}
+  .stat .v{display:block;font-size:16px;font-weight:700;color:var(--olive);line-height:1.1}
+  .stat .l{font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin-top:3px}
+  .det-actions{display:flex;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+  .da{flex:1;min-width:90px;border-radius:12px;padding:12px;font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--paper)}
+  .da.primary{background:var(--olive);color:#fff;border-color:var(--olive)}
+  .da.primary[data-on="true"]{background:var(--saffron-deep);border-color:var(--saffron-deep)}
+  .da.fav{color:var(--aubergine)}
+  .da.fav[data-on="true"]{background:var(--aubergine);color:#fff;border-color:var(--aubergine)}
+  .da.plan{color:var(--olive)}
+  .sec-title{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+  .sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
+  ul.ingr{list-style:none;margin:0;padding:0}
+  ul.ingr li{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+  ul.ingr li .amt{font-family:var(--mono);font-size:13px;color:var(--olive);font-weight:700;white-space:nowrap}
+  ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+  ol.steps li{position:relative;padding:0 0 18px 40px;font-size:15px}
+  ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:-1px;width:27px;height:27px;border-radius:50%;background:var(--olive);color:#fff;font-family:var(--mono);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  ol.steps li:last-child{padding-bottom:0}
+  .tip{margin-top:22px;background:#F4E6C7;border-radius:14px;padding:15px 16px;font-size:14px}
+  .tip b{color:var(--saffron-deep)}
+
+  /* bottom nav */
+  nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);height:calc(var(--nav) + env(safe-area-inset-bottom))}
+  nav.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-soft);font-size:11px;font-weight:600;position:relative;padding-top:8px}
+  nav.tabbar button[aria-selected="true"]{color:var(--olive)}
+  nav.tabbar .nbadge{position:absolute;top:5px;left:calc(50% + 8px);background:var(--saffron);color:var(--ink);border-radius:999px;min-width:17px;height:17px;padding:0 4px;font-family:var(--mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+  /* planner */
+  .pl-wrap{padding:14px 18px calc(var(--nav) + 24px);max-width:780px;margin:0 auto}
+  .goalcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+  .goalcard h3{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin:0 0 10px}
+  .goals{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+  .goalfield{display:flex;flex-direction:column;gap:3px}
+  .goalfield label{font-size:10px;color:var(--ink-soft);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em}
+  .goalfield input{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 6px;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--olive);text-align:center;background:var(--paper)}
+  .morning-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:13px}
+  .tg{width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;transition:background .15s;flex:0 0 auto}
+  .tg[data-on="true"]{background:var(--olive)}
+  .tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s}
+  .tg[data-on="true"]::after{transform:translateX(18px)}
+
+  .weekrow{display:flex;align-items:center;gap:6px;margin-bottom:14px}
+  .weeknav{width:34px;height:34px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--olive);flex:0 0 auto}
+  .days{display:flex;gap:5px;flex:1;justify-content:space-between}
+  .day{flex:1;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:7px 2px 8px;text-align:center;position:relative;min-width:0}
+  .day .dw{font-size:10px;color:var(--ink-soft);text-transform:uppercase;font-family:var(--mono)}
+  .day .dn{font-size:16px;font-weight:700;font-family:var(--serif);margin-top:1px;line-height:1}
+  .day[data-sel="true"]{background:var(--olive);border-color:var(--olive)}
+  .day[data-sel="true"] .dw,.day[data-sel="true"] .dn{color:#fff}
+  .day[data-today="true"]:not([data-sel="true"]){border-color:var(--olive-soft);border-width:2px}
+  .day .crown{position:absolute;top:-7px;right:-3px;font-size:14px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+  .day .pdot{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--saffron)}
+  .day[data-sel="true"] .pdot{background:#fff}
+
+  .daypanel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .dp-date{font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 14px;display:flex;align-items:center;gap:8px}
+  .pbar-wrap{margin-bottom:6px}
+  .pbar-top{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:13px;margin-bottom:5px}
+  .pbar-top .lab{color:var(--ink);font-weight:700}
+  .pbar-top .need{color:var(--saffron-deep);font-size:12px}
+  .pbar-top .done{color:var(--olive);font-weight:700}
+  .pbar{height:12px;border-radius:999px;background:var(--paper);border:1px solid var(--line);overflow:hidden}
+  .pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--olive-soft),var(--olive));border-radius:999px;transition:width .3s}
+  .pbar.met i{background:linear-gradient(90deg,var(--saffron),var(--saffron-deep))}
+  .macmini{display:flex;gap:8px;margin:14px 0 4px}
+  .macmini .m{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:8px;text-align:center}
+  .macmini .m .mv{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--olive)}
+  .macmini .m .ml{font-size:9px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;font-family:var(--mono);margin-top:2px}
+
+  .planlist{list-style:none;margin:16px 0 0;padding:0}
+  .planlist li{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .planlist .pemo{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:21px;background:linear-gradient(140deg,hsl(var(--h) 48% 87%),hsl(var(--h) 44% 76%));flex:0 0 auto}
+  .planlist .pn{flex:1;font-size:14.5px;line-height:1.25}
+  .planlist .pn small{display:block;font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .planlist .prm{width:28px;height:28px;border-radius:50%;background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);font-size:15px;line-height:1;flex:0 0 auto}
+  .planlist li.morning .pn small{color:var(--saffron-deep)}
+  .addday{margin-top:16px;width:100%;border:2px dashed var(--olive-soft);border-radius:13px;padding:13px;font-size:14px;font-weight:600;color:var(--olive);background:transparent}
+  .dayshop{margin-top:10px;width:100%;border:1px solid var(--olive);border-radius:13px;padding:13px;font-size:14px;font-weight:600;color:#fff;background:var(--olive);display:flex;align-items:center;justify-content:center;gap:8px}
+  .dayshop:active{opacity:.85}
+  .planlist li[data-open]{cursor:pointer}
+  .planlist li[data-open] .pn{padding-right:4px}
+  .crown-line{margin-top:14px;background:#F4E6C7;border-radius:12px;padding:11px 14px;font-size:13.5px;color:var(--saffron-deep);font-weight:600;display:flex;align-items:center;gap:8px}
+
+  /* shopping */
+  .shop-wrap{padding:14px 18px calc(var(--nav) + 24px);max-width:780px;margin:0 auto}
+  .shop-wrap h2,.pl-wrap .ph{font-family:var(--serif);font-size:24px;font-weight:600;margin:2px 0 4px}
+  .shop-wrap .sub{color:var(--ink-soft);font-size:14px;margin:0 0 16px}
+  .selrecipes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+  .selchip{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;font-size:13px;max-width:100%}
+  .selchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
+  .selchip button{width:22px;height:22px;border-radius:50%;background:var(--paper);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:14px;line-height:1}
+  .catblock{margin-top:20px}
+  .catblock h3{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--saffron-deep);font-weight:700;margin:0 0 4px}
+  ul.shoplist{list-style:none;margin:0;padding:0}
+  ul.shoplist li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  ul.shoplist .cb{width:23px;height:23px;border-radius:7px;border:2px solid var(--olive-soft);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;background:transparent;font-size:14px}
+  ul.shoplist li[data-checked="true"] .cb{background:var(--olive);border-color:var(--olive)}
+  ul.shoplist li[data-checked="true"] .nm{text-decoration:line-through;color:var(--ink-soft)}
+  ul.shoplist .nm{flex:1;font-size:15px}
+  ul.shoplist .amt{font-family:var(--mono);font-size:13px;color:var(--olive);font-weight:700;white-space:nowrap}
+  .clearbtn{margin-top:24px;width:100%;border:1px solid var(--line);border-radius:13px;padding:13px;font-size:14px;font-weight:600;color:var(--aubergine);background:var(--surface)}
+
+  /* picker overlay */
+  .picklist{list-style:none;margin:8px 0 0;padding:0 20px}
+  .picklist li{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .picklist .pemo{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:linear-gradient(140deg,hsl(var(--h) 48% 87%),hsl(var(--h) 44% 76%));flex:0 0 auto}
+  .picklist .pn{flex:1;font-size:14.5px}
+  .picklist .pn small{display:block;font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .picklist .padd{width:34px;height:34px;border-radius:50%;background:var(--olive);color:#fff;font-size:20px;line-height:1;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+  .pickdays{display:grid;grid-template-columns:1fr;gap:9px;padding:8px 20px 0}
+  .pickday{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:13px;padding:13px 15px;background:var(--surface);font-size:15px;font-weight:600;color:var(--ink)}
+  .pickday small{font-family:var(--mono);font-size:11px;color:var(--ink-soft);font-weight:400}
+  .pickday.today{border-color:var(--olive-soft);border-width:2px}
+  .pickfilters{padding:8px 20px 0}
+
+  .toast{position:fixed;left:50%;bottom:calc(var(--nav) + 26px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;font-weight:500;z-index:90;opacity:0;pointer-events:none;transition:all .22s;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .loading{text-align:center;padding:80px 20px;font-family:var(--mono);font-size:13px;color:var(--ink-soft)}
+</style>
+
+<div id="app"><div class="loading">Even de keuken openen…</div></div>
+
+<script>
+const RECIPES = [{"id":1,"t":"Gepofte aardappel met spinazie-tahin & pompoenpit","type":"diner","min":40,"af":true,"p":22,"kcal":520,"tags":["airfryer","groente","cremig"],"ing":[{"n":"kruimige aardappel","q":4,"u":"st","c":"Groente & fruit"},{"n":"verse spinazie","q":200,"u":"g","c":"Groente & fruit"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"verse bieslook","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"tahin","q":3,"u":"el","c":"Noten & zaden"},{"n":"pompoenpitten","q":4,"u":"el","c":"Noten & zaden"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"},{"n":"zout & peper","q":null,"u":"","c":"Kruiden & specerijen"}],"steps":["Prik de aardappels rondom in, wrijf met olijfolie en zout. Airfryer 200°C, ca. 35-40 min tot ze zacht zijn vanbinnen.","Meng tahin met sap van een halve citroen, 3-4 el water, zout en peper tot een gladde, lobbige saus.","Wok de spinazie kort in een pan met een scheutje water tot net geslonken. Knijp licht uit.","Rooster de pompoenpitten de laatste 4 min mee in de airfryer (180°C) of droog in een pan.","Snijd de aardappels open, vul met spinazie, lepel de tahinsaus erover en strooi pompoenpit, hennep en bieslook erover."],"tip":"Voor extra eiwit: rooster ook 150 g blokjes tofu mee op 200°C (12 min) en stop die in de aardappel.","c":55,"f":23,"serves":2,"emo":"🥔","hue":40},{"id":2,"t":"Krokante airfryer-tofu met gember-sesam over quinoa","type":"diner","min":30,"af":true,"p":38,"kcal":560,"tags":["airfryer","eiwitrijk","aziatisch"],"ing":[{"n":"stevige tofu","q":400,"u":"g","c":"Overig"},{"n":"quinoa","q":160,"u":"g","c":"Granen & basis"},{"n":"verse gember","q":4,"u":"cm","c":"Groente & fruit"},{"n":"tamari (glutenvrij)","q":3,"u":"el","c":"Overig"},{"n":"sesamolie","q":1,"u":"el","c":"Vocht & olie"},{"n":"sesamzaad","q":2,"u":"el","c":"Noten & zaden"},{"n":"limoen","q":1,"u":"st","c":"Groente & fruit"},{"n":"verse koriander","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"paksoi","q":2,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"}],"steps":["Snijd de tofu in blokjes, dep droog. Meng met 1 el tamari en 1 el olie. Airfryer 200°C, 14-16 min, halverwege schudden, tot goudbruin en knapperig.","Spoel de quinoa, kook 15 min in dubbele hoeveelheid water, laat staan en pluis los met een vork.","Rasp de gember. Meng met de rest van de tamari, sesamolie en limoensap tot een dressing.","Snijd de paksoi en bak kort in een pan met een scheut olie tot beetgaar.","Schep quinoa in kommen, leg tofu en paksoi erop, lepel de gember-sesamdressing erover. Bestrooi met sesamzaad en koriander."],"tip":"Tamari is de glutenvrije sojasaus. Gewone sojasaus bevat tarwe, dus vermijd die.","c":45,"f":25,"serves":2,"emo":"🍚","hue":90},{"id":3,"t":"Airfryer-aubergine met gember-sesam over boekweit","type":"diner","min":35,"af":true,"p":18,"kcal":470,"tags":["airfryer","groente","aziatisch"],"ing":[{"n":"aubergine","q":2,"u":"st","c":"Groente & fruit"},{"n":"boekweitgrutten","q":160,"u":"g","c":"Granen & basis"},{"n":"verse gember","q":3,"u":"cm","c":"Groente & fruit"},{"n":"tamari (glutenvrij)","q":2,"u":"el","c":"Overig"},{"n":"sesamolie","q":1,"u":"el","c":"Vocht & olie"},{"n":"sesamzaad","q":2,"u":"el","c":"Noten & zaden"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"},{"n":"verse koriander","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"},{"n":"limoen","q":1,"u":"st","c":"Groente & fruit"}],"steps":["Snijd de aubergine in plakken van 1,5 cm, kwast met olie en zout. Airfryer 190°C, 18-20 min, halverwege keren.","Kook de boekweit 12-15 min beetgaar, giet af.","Rasp de gember en meng met tamari, sesamolie en limoensap.","Verdeel de boekweit, leg de aubergine erop en lepel de gember-sesamsaus eroverheen.","Bestrooi met sesam, hennepzaad en koriander."],"tip":"Boekweit is van nature glutenvrij ondanks de naam. Kies losse grutten, geen kant-en-klare mix.","c":55,"f":20,"serves":2,"emo":"🍆","hue":280},{"id":4,"t":"Airfryer gevulde paprika met quinoa, spinazie & pompoenpit","type":"diner","min":40,"af":true,"p":24,"kcal":480,"tags":["airfryer","groente","eiwitrijk"],"ing":[{"n":"rode paprika","q":4,"u":"st","c":"Groente & fruit"},{"n":"quinoa","q":150,"u":"g","c":"Granen & basis"},{"n":"verse spinazie","q":150,"u":"g","c":"Groente & fruit"},{"n":"pompoenpitten","q":4,"u":"el","c":"Noten & zaden"},{"n":"pijnboompitten","q":2,"u":"el","c":"Noten & zaden"},{"n":"verse peterselie","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"gerookt paprikapoeder","q":1,"u":"tl","c":"Kruiden & specerijen"}],"steps":["Kook de quinoa 15 min, pluis los.","Hak de spinazie fijn en meng door de warme quinoa met pompoenpit, pijnboompit, peterselie, citroensap, paprikapoeder, olie, zout en peper.","Halveer de paprika's, verwijder de zaadlijsten en vul met het quinoamengsel.","Airfryer 180°C, 16-18 min tot de paprika zacht is en de bovenkant licht geroosterd.","Werk af met extra peterselie en een scheutje olie."],"tip":"Wil je het romiger? Lepel er na het bakken wat tahinsaus overheen (tahin + citroen + water).","c":55,"f":18,"serves":2,"emo":"🫑","hue":0},{"id":5,"t":"Airfryer broccoli & krokante tempeh met amandel-gremolata over rijst","type":"diner","min":35,"af":true,"p":34,"kcal":580,"tags":["airfryer","eiwitrijk","groente"],"ing":[{"n":"tempeh","q":300,"u":"g","c":"Overig"},{"n":"broccoliroosjes","q":300,"u":"g","c":"Groente & fruit"},{"n":"zilvervliesrijst","q":160,"u":"g","c":"Granen & basis"},{"n":"amandelen","q":40,"u":"g","c":"Noten & zaden"},{"n":"verse peterselie","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":3,"u":"el","c":"Vocht & olie"},{"n":"tamari (glutenvrij)","q":2,"u":"el","c":"Overig"}],"steps":["Snijd de tempeh in plakjes, marineer 10 min in tamari + 1 el olie. Airfryer 190°C, 14 min, halverwege keren.","Kook de rijst gaar volgens verpakking.","Meng de broccoliroosjes met 1 el olie en zout. Airfryer 200°C, 10-12 min tot de randjes knapperig zijn (kan tegelijk met de tempeh in twee rondes).","Hak amandelen, peterselie en de rasp van de citroen fijn tot een gremolata. Meng met 1 el olie en citroensap.","Schep rijst, broccoli en tempeh in kommen en strooi de amandel-gremolata erover."],"tip":"Tempeh blijft krokanter als je hem eerst 8 min stoomt of kort kookt voor je marineert. Optioneel.","c":55,"f":25,"serves":2,"emo":"🥦","hue":120},{"id":6,"t":"Airfryer hokkaidopompoen met salie & walnoot over polenta","type":"diner","min":40,"af":true,"p":16,"kcal":510,"tags":["airfryer","groente","herfst"],"ing":[{"n":"hokkaidopompoen","q":600,"u":"g","c":"Groente & fruit"},{"n":"polenta (maïsgries)","q":150,"u":"g","c":"Granen & basis"},{"n":"walnoten","q":50,"u":"g","c":"Noten & zaden"},{"n":"verse salie","q":10,"u":"blad","c":"Kruiden & specerijen"},{"n":"olijfolie","q":3,"u":"el","c":"Vocht & olie"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"pompoenpitten","q":2,"u":"el","c":"Noten & zaden"},{"n":"zout & peper","q":null,"u":"","c":"Kruiden & specerijen"}],"steps":["Snijd de pompoen (schil mag mee bij hokkaido) in partjes, meng met 2 el olie, zout en peper. Airfryer 200°C, 18-20 min tot zacht en goudbruin.","Roer de salieblaadjes de laatste 4 min mee voor knapperige salie.","Kook de polenta volgens verpakking tot een smeuïge pap, breng op smaak met zout, citroenrasp en 1 el olie.","Rooster de walnoten en pompoenpitten kort droog in een pan.","Schep polenta op borden, leg de pompoen erop en strooi walnoot, pompoenpit en de krokante salie eroverheen."],"tip":"Geen polenta? Vervang door gekookte gierst of zilvervliesrijst.","c":60,"f":23,"serves":2,"emo":"🎃","hue":28},{"id":7,"t":"Airfryer tofu-schnitzel (boekweitkorst) met citroen & aardappelpartjes","type":"diner","min":40,"af":true,"p":32,"kcal":600,"tags":["airfryer","eiwitrijk","crispy"],"ing":[{"n":"stevige tofu","q":400,"u":"g","c":"Overig"},{"n":"boekweitmeel","q":60,"u":"g","c":"Granen & basis"},{"n":"kruimige aardappel","q":500,"u":"g","c":"Groente & fruit"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"verse peterselie","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"olijfolie","q":3,"u":"el","c":"Vocht & olie"},{"n":"gedroogde tijm","q":1,"u":"tl","c":"Kruiden & specerijen"},{"n":"plantaardige (rijst)melk","q":60,"u":"ml","c":"Vocht & olie"}],"steps":["Snijd de tofu in 4 platte lappen, dep heel goed droog. Haal door de rijstmelk en daarna door boekweitmeel met zout, peper en tijm.","Besprenkel de tofu-schnitzels met olie. Airfryer 200°C, 16 min, halverwege keren, tot goudbruin en krokant.","Snijd de aardappels in partjes, meng met 1 el olie en zout. Airfryer 200°C, 22-25 min (eerst de aardappel, dan de tofu of in twee laden).","Hak de peterselie fijn en meng met citroenrasp.","Serveer de schnitzels met de aardappelpartjes, een partje citroen en de peterselie eroverheen."],"tip":"Tofu echt goed droogdeppen (eventueel 10 min persen onder een bord) geeft de knapperigste korst.","c":55,"f":28,"serves":2,"emo":"🍟","hue":40},{"id":8,"t":"Airfryer rösti van aardappel & courgette met gebakken ei","type":"diner","min":35,"af":true,"p":21,"kcal":490,"tags":["airfryer","af en toe ei","comfort"],"ing":[{"n":"kruimige aardappel","q":400,"u":"g","c":"Groente & fruit"},{"n":"courgette","q":1,"u":"st","c":"Groente & fruit"},{"n":"ei","q":2,"u":"st","c":"Overig"},{"n":"verse bieslook","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"pompoenpitten","q":2,"u":"el","c":"Noten & zaden"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"zout & peper","q":null,"u":"","c":"Kruiden & specerijen"}],"steps":["Rasp de aardappel en courgette grof. Knijp het vocht er stevig uit in een schone doek.","Meng met zout, peper en 1 el olie. Vorm 4 platte koeken en leg op bakpapier in de airfryer.","Airfryer 200°C, 18-20 min, halverwege keren, tot goudbruin en krokant.","Bak intussen de eieren in een pan met een scheutje olie.","Leg een gebakken ei op twee rösti's per persoon, bestrooi met bieslook en pompoenpit."],"tip":"Dit is een van de twee ei-recepten. Goed voor af en toe, niet te vaak volgens jouw profiel.","c":45,"f":25,"serves":2,"emo":"🍳","hue":45},{"id":9,"t":"Airfryer venkel & wortel met dille over quinoa","type":"diner","min":35,"af":true,"p":18,"kcal":440,"tags":["airfryer","groente","fris"],"ing":[{"n":"venkelknol","q":2,"u":"st","c":"Groente & fruit"},{"n":"wortel","q":4,"u":"st","c":"Groente & fruit"},{"n":"quinoa","q":160,"u":"g","c":"Granen & basis"},{"n":"verse dille","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"hennepzaad","q":3,"u":"el","c":"Noten & zaden"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"zout & peper","q":null,"u":"","c":"Kruiden & specerijen"}],"steps":["Snijd de venkel in partjes en de wortel in repen. Meng met olie, zout en peper.","Airfryer 190°C, 18-20 min tot zacht en op de randjes geroosterd.","Kook de quinoa 15 min, pluis los.","Meng de gebakken groente door de quinoa met citroensap, gehakte dille en hennepzaad.","Breng op smaak met zout en peper en werk af met extra dille."],"tip":"Venkel (tot ~48 g per portie) is laag-FODMAP. Het venkelgroen kun je als kruid meegebruiken.","c":50,"f":18,"serves":2,"emo":"🥕","hue":30},{"id":10,"t":"Airfryer maïs, paprika & tempeh met koriander-limoen over rijst","type":"diner","min":35,"af":true,"p":30,"kcal":560,"tags":["airfryer","eiwitrijk","mexicaans"],"ing":[{"n":"tempeh","q":250,"u":"g","c":"Overig"},{"n":"rode paprika","q":2,"u":"st","c":"Groente & fruit"},{"n":"maïskolf","q":1,"u":"st","c":"Groente & fruit"},{"n":"zilvervliesrijst","q":160,"u":"g","c":"Granen & basis"},{"n":"limoen","q":2,"u":"st","c":"Groente & fruit"},{"n":"verse koriander","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"komijnpoeder","q":1,"u":"tl","c":"Kruiden & specerijen"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"tamari (glutenvrij)","q":2,"u":"el","c":"Overig"}],"steps":["Snijd tempeh in blokjes, marineer in tamari, komijn en 1 el olie. Airfryer 190°C, 14 min.","Snijd de paprika in repen en de maïs van de kolf. Meng met 1 el olie en bak 10 min mee op 200°C.","Kook de rijst gaar.","Meng gehakte koriander met limoensap, snufje zout en een scheutje olie.","Schep rijst, groente en tempeh in kommen, lepel de koriander-limoendressing erover."],"tip":"Een halve maïskolf per persoon is laag-FODMAP. Houd het bij ongeveer dat.","c":60,"f":22,"serves":2,"emo":"🌽","hue":48},{"id":11,"t":"Airfryer gevulde courgette met quinoa, pijnboompit & basilicum","type":"diner","min":35,"af":true,"p":20,"kcal":450,"tags":["airfryer","groente","mediterraan"],"ing":[{"n":"courgette","q":2,"u":"st","c":"Groente & fruit"},{"n":"quinoa","q":120,"u":"g","c":"Granen & basis"},{"n":"cherrytomaat","q":150,"u":"g","c":"Groente & fruit"},{"n":"pijnboompitten","q":3,"u":"el","c":"Noten & zaden"},{"n":"verse basilicum","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"}],"steps":["Kook de quinoa 15 min, pluis los.","Halveer de courgettes overlangs, hol ze iets uit en hak het vruchtvlees fijn.","Meng quinoa met courgettevlees, gehalveerde cherrytomaten, pijnboompit, hennep, gescheurde basilicum, citroensap, olie, zout en peper.","Vul de courgettehelften en leg ze in de airfryer.","Airfryer 180°C, 16-18 min tot de courgette zacht en de bovenkant geroosterd is."],"tip":"Courgette is laag-FODMAP tot ~65 g per portie. Twee halve courgettes voor z'n tweeën zit daar netjes binnen.","c":45,"f":21,"serves":2,"emo":"🥒","hue":100},{"id":12,"t":"Boekweitnoedels met gember-sesam tofu & airfryer paksoi","type":"diner","min":35,"af":true,"p":36,"kcal":590,"tags":["airfryer","eiwitrijk","aziatisch"],"ing":[{"n":"100% boekweit-soba","q":160,"u":"g","c":"Granen & basis"},{"n":"stevige tofu","q":350,"u":"g","c":"Overig"},{"n":"paksoi","q":3,"u":"st","c":"Groente & fruit"},{"n":"verse gember","q":4,"u":"cm","c":"Groente & fruit"},{"n":"tamari (glutenvrij)","q":3,"u":"el","c":"Overig"},{"n":"sesamolie","q":1,"u":"el","c":"Vocht & olie"},{"n":"sesamzaad","q":2,"u":"el","c":"Noten & zaden"},{"n":"limoen","q":1,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"}],"steps":["Snijd de tofu in blokjes, dep droog, meng met 1 el tamari en 1 el olie. Airfryer 200°C, 15 min tot krokant.","Kook de soba volgens verpakking, spoel koud.","Snijd de paksoi en bak kort in een pan tot beetgaar.","Maak een saus van geraspte gember, 2 el tamari, sesamolie en limoensap.","Meng de noedels met de saus, schep paksoi en tofu erop, bestrooi met sesamzaad."],"tip":"Let bij soba op de verpakking: kies 100% boekweit. Veel soba bevat ook tarwe.","c":55,"f":25,"serves":2,"emo":"🍜","hue":90},{"id":13,"t":"Tofu-kokoscurry met spinazie over rijst","type":"diner","min":35,"af":true,"p":33,"kcal":610,"tags":["airfryer","eiwitrijk","cremig"],"ing":[{"n":"stevige tofu","q":400,"u":"g","c":"Overig"},{"n":"kokosmelk","q":1,"u":"blik","c":"Vocht & olie"},{"n":"verse spinazie","q":200,"u":"g","c":"Groente & fruit"},{"n":"zilvervliesrijst","q":160,"u":"g","c":"Granen & basis"},{"n":"verse gember","q":3,"u":"cm","c":"Groente & fruit"},{"n":"kurkuma","q":1,"u":"tl","c":"Kruiden & specerijen"},{"n":"komijnpoeder","q":1,"u":"tl","c":"Kruiden & specerijen"},{"n":"limoen","q":1,"u":"st","c":"Groente & fruit"},{"n":"verse koriander","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"}],"steps":["Snijd tofu in blokjes, airfryer 200°C, 14 min tot krokant.","Kook de rijst gaar.","Verhit olie in een pan, bak geraspte gember, kurkuma en komijn kort aan. Giet de kokosmelk erbij en laat 5 min pruttelen.","Roer de spinazie erdoor tot geslonken, voeg de krokante tofu toe en breng op smaak met limoensap en zout.","Serveer over rijst met verse koriander."],"tip":"Een laag-FODMAP curry kan prima zonder ui en knoflook. Gember, kurkuma en komijn doen het werk.","c":50,"f":30,"serves":2,"emo":"🍛","hue":35},{"id":14,"t":"Airfryer pastinaak & wortel met tijm over gierst","type":"diner","min":40,"af":true,"p":17,"kcal":470,"tags":["airfryer","groente","winter"],"ing":[{"n":"pastinaak","q":3,"u":"st","c":"Groente & fruit"},{"n":"wortel","q":4,"u":"st","c":"Groente & fruit"},{"n":"gierst","q":150,"u":"g","c":"Granen & basis"},{"n":"verse tijm","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"hennepzaad","q":3,"u":"el","c":"Noten & zaden"},{"n":"walnoten","q":40,"u":"g","c":"Noten & zaden"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"}],"steps":["Snijd pastinaak en wortel in repen, meng met olie, tijm, zout en peper.","Airfryer 190°C, 20-22 min tot zacht en gekarameliseerd.","Kook de gierst 18 min gaar, laat opdrogen.","Rooster walnoten kort droog en hak grof.","Meng de groente door de gierst met citroensap, hennep en walnoot. Werk af met extra tijm."],"tip":"Gierst is glutenvrij en mild. Spoel hem goed voor het koken tegen een bittere bijsmaak.","c":55,"f":20,"serves":2,"emo":"🍲","hue":35},{"id":15,"t":"Airfryer aubergine-steaks met chimichurri & gepofte aardappel","type":"diner","min":45,"af":true,"p":18,"kcal":500,"tags":["airfryer","groente","kruidig"],"ing":[{"n":"aubergine","q":2,"u":"st","c":"Groente & fruit"},{"n":"kruimige aardappel","q":4,"u":"st","c":"Groente & fruit"},{"n":"verse peterselie","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"verse oregano","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"rode chilipeper","q":1,"u":"st","c":"Groente & fruit"},{"n":"rodewijnazijn","q":1,"u":"el","c":"Overig"},{"n":"olijfolie","q":4,"u":"el","c":"Vocht & olie"},{"n":"pompoenpitten","q":3,"u":"el","c":"Noten & zaden"}],"steps":["Prik de aardappels in, wrijf met olie en zout. Airfryer 200°C, 35-40 min.","Snijd de aubergine overlangs in dikke plakken, kerf het oppervlak in en kwast met olie en zout. Airfryer 200°C, 18 min tot zacht en goudbruin (samen of na de aardappel).","Hak peterselie, oregano en chili fijn. Meng met 3 el olie, azijn en zout tot chimichurri.","Rooster de pompoenpitten kort droog.","Lepel de chimichurri over de aubergine-steaks, serveer met de gepofte aardappel en strooi pompoenpit erover."],"tip":"Voor meer eiwit: serveer met 150 g krokante airfryer-tofu of een lepel hennepzaad door de chimichurri.","c":45,"f":28,"serves":2,"emo":"🌶️","hue":8},{"id":16,"t":"Airfryer paprika-romesco met krokante tempeh over quinoa","type":"diner","min":40,"af":true,"p":32,"kcal":570,"tags":["airfryer","eiwitrijk","spaans"],"ing":[{"n":"rode paprika","q":3,"u":"st","c":"Groente & fruit"},{"n":"tempeh","q":300,"u":"g","c":"Overig"},{"n":"quinoa","q":160,"u":"g","c":"Granen & basis"},{"n":"amandelen","q":50,"u":"g","c":"Noten & zaden"},{"n":"tomaat","q":1,"u":"st","c":"Groente & fruit"},{"n":"rodewijnazijn","q":1,"u":"el","c":"Overig"},{"n":"gerookt paprikapoeder","q":1,"u":"tl","c":"Kruiden & specerijen"},{"n":"olijfolie","q":3,"u":"el","c":"Vocht & olie"},{"n":"verse peterselie","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"tamari (glutenvrij)","q":2,"u":"el","c":"Overig"}],"steps":["Snijd 2 paprika's en de tomaat in stukken, airfryer 200°C, 15 min tot zacht en geblakerd.","Pureer de geroosterde paprika en tomaat met amandelen, azijn, paprikapoeder, 2 el olie en zout tot een romesco.","Snijd tempeh in plakjes, marineer in tamari en 1 el olie, airfryer 190°C, 14 min.","Kook de quinoa 15 min, pluis los.","Snijd de derde paprika rauw in repen. Schep quinoa in kommen, lepel romesco erover, leg tempeh en rauwe paprika erop, werk af met peterselie."],"tip":"De romesco houdt 4 dagen in de koelkast en is ook heerlijk als dip bij airfryer-groente.","c":52,"f":25,"serves":2,"emo":"🥘","hue":12},{"id":17,"t":"Polenta met airfryer-cherrytomaat, basilicum & pompoenpit-parmezaan","type":"diner","min":30,"af":true,"p":16,"kcal":480,"tags":["airfryer","groente","italiaans"],"ing":[{"n":"polenta (maïsgries)","q":160,"u":"g","c":"Granen & basis"},{"n":"cherrytomaat","q":300,"u":"g","c":"Groente & fruit"},{"n":"verse basilicum","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"pompoenpitten","q":60,"u":"g","c":"Noten & zaden"},{"n":"hennepzaad","q":3,"u":"el","c":"Noten & zaden"},{"n":"olijfolie","q":3,"u":"el","c":"Vocht & olie"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"zout & peper","q":null,"u":"","c":"Kruiden & specerijen"}],"steps":["Meng de cherrytomaten met 1 el olie en zout. Airfryer 190°C, 10-12 min tot ze openbarsten.","Kook de polenta volgens verpakking tot smeuïg, roer er zout, citroenrasp en 1 el olie door.","Maal pompoenpitten met een snuf zout in een keukenmachine tot een grof 'parmezaan'-poeder.","Schep polenta op borden, leg de geroosterde tomaten erop en lepel het tomatensap eroverheen.","Bestrooi met de pompoenpit-parmezaan, hennepzaad en gescheurde basilicum."],"tip":"De pompoenpit-parmezaan kun je in een potje 2 weken bewaren. Lekker over elk gerecht.","c":50,"f":24,"serves":2,"emo":"🍅","hue":6},{"id":18,"t":"Airfryer-tempeh met Hasselback-aardappel & rucola","type":"diner","min":45,"af":true,"p":31,"kcal":560,"tags":["airfryer","eiwitrijk","comfort"],"ing":[{"n":"tempeh","q":300,"u":"g","c":"Overig"},{"n":"vastkokende aardappel","q":6,"u":"st","c":"Groente & fruit"},{"n":"rucola","q":60,"u":"g","c":"Groente & fruit"},{"n":"verse rozemarijn","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"tamari (glutenvrij)","q":2,"u":"el","c":"Overig"},{"n":"olijfolie","q":4,"u":"el","c":"Vocht & olie"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"pompoenpitten","q":2,"u":"el","c":"Noten & zaden"}],"steps":["Snijd de aardappels tot net niet onderaan in dunne plakjes (Hasselback). Kwast met olie, zout en rozemarijn. Airfryer 200°C, 30-35 min, af en toe extra olie kwasten.","Snijd tempeh in plakken, marineer in tamari en 1 el olie. Airfryer 190°C, 14 min (laatste rondes samen).","Meng de rucola met citroensap, een scheut olie en zout.","Rooster de pompoenpitten kort droog.","Serveer de Hasselback-aardappels met tempeh en rucolasalade, bestrooid met pompoenpit."],"tip":"Aardappel kun je tot ~75% garen, dan even uit de airfryer, plakjes losmaken en terug voor de crunch.","c":50,"f":26,"serves":2,"emo":"🥔","hue":42},{"id":19,"t":"Quinoabowl met airfryer-tofu & tahin","type":"lunch","min":30,"af":true,"p":35,"kcal":540,"tags":["airfryer","eiwitrijk","bowl"],"ing":[{"n":"stevige tofu","q":350,"u":"g","c":"Overig"},{"n":"quinoa","q":150,"u":"g","c":"Granen & basis"},{"n":"komkommer","q":0.5,"u":"st","c":"Groente & fruit"},{"n":"wortel","q":2,"u":"st","c":"Groente & fruit"},{"n":"verse spinazie","q":60,"u":"g","c":"Groente & fruit"},{"n":"tahin","q":3,"u":"el","c":"Noten & zaden"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"pompoenpitten","q":3,"u":"el","c":"Noten & zaden"},{"n":"tamari (glutenvrij)","q":1,"u":"el","c":"Overig"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"}],"steps":["Snijd tofu in blokjes, meng met tamari en olie, airfryer 200°C, 15 min tot krokant.","Kook de quinoa 15 min, pluis los, laat iets afkoelen.","Snijd komkommer en wortel in reepjes.","Roer tahin met citroensap en water tot een lobbige dressing.","Verdeel quinoa over kommen, leg tofu, spinazie, komkommer en wortel erop, lepel de tahindressing erover en strooi pompoenpit eroverheen."],"tip":"Maak de tofu 's avonds en bewaar koud. 's Ochtends in 5 min een bowl klaar.","c":42,"f":24,"serves":2,"emo":"🥗","hue":110},{"id":20,"t":"Boekweitsalade met komkommer, dille & hennep","type":"lunch","min":25,"af":false,"p":19,"kcal":420,"tags":["fris","bowl","meeneem"],"ing":[{"n":"boekweitgrutten","q":150,"u":"g","c":"Granen & basis"},{"n":"komkommer","q":1,"u":"st","c":"Groente & fruit"},{"n":"cherrytomaat","q":150,"u":"g","c":"Groente & fruit"},{"n":"verse dille","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"verse munt","q":0.5,"u":"bosje","c":"Kruiden & specerijen"},{"n":"hennepzaad","q":4,"u":"el","c":"Noten & zaden"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"}],"steps":["Kook de boekweit 12-15 min beetgaar, spoel koud en laat uitlekken.","Snijd komkommer in blokjes en halveer de cherrytomaten.","Hak dille en munt fijn.","Meng alles met citroensap, olie, zout en peper.","Strooi het hennepzaad erover vlak voor het serveren."],"tip":"Hennepzaad is hier de eiwitmotor. 4 el levert ongeveer 12-13 g eiwit. Voeg gerust meer toe.","c":45,"f":18,"serves":2,"emo":"🥒","hue":100},{"id":21,"t":"Airfryer zoete-aardappeltoast met avocado & pompoenpit","type":"lunch","min":25,"af":true,"p":14,"kcal":400,"tags":["airfryer","groente","snel"],"ing":[{"n":"zoete aardappel","q":1,"u":"st","c":"Groente & fruit"},{"n":"avocado","q":1,"u":"st","c":"Groente & fruit"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"pompoenpitten","q":3,"u":"el","c":"Noten & zaden"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"},{"n":"verse bieslook","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"chilivlokken","q":null,"u":"","c":"Kruiden & specerijen"},{"n":"olijfolie","q":1,"u":"tl","c":"Vocht & olie"}],"steps":["Snijd de zoete aardappel overlangs in plakken van ca. 1 cm. Kwast licht met olie.","Airfryer 200°C, 14-16 min tot zacht en de randjes geroosterd.","Prak de avocado met citroensap, zout en peper.","Smeer de avocado op de zoete-aardappeltoasts.","Strooi pompoenpit, hennep, bieslook en chilivlokken erover."],"tip":"Houd zoete aardappel op ~75 g per persoon en avocado op een halve. Dan blijf je laag-FODMAP.","c":35,"f":22,"serves":2,"emo":"🥑","hue":95},{"id":22,"t":"Rijstpapierrolletjes met tofu, wortel & amandel-sesamdip","type":"lunch","min":30,"af":false,"p":26,"kcal":430,"tags":["eiwitrijk","fris","aziatisch"],"ing":[{"n":"rijstpapiervellen","q":8,"u":"st","c":"Granen & basis"},{"n":"stevige tofu","q":250,"u":"g","c":"Overig"},{"n":"wortel","q":2,"u":"st","c":"Groente & fruit"},{"n":"komkommer","q":0.5,"u":"st","c":"Groente & fruit"},{"n":"verse munt","q":0.5,"u":"bosje","c":"Kruiden & specerijen"},{"n":"verse koriander","q":0.5,"u":"bosje","c":"Kruiden & specerijen"},{"n":"amandelpasta","q":3,"u":"el","c":"Noten & zaden"},{"n":"tamari (glutenvrij)","q":2,"u":"el","c":"Overig"},{"n":"limoen","q":1,"u":"st","c":"Groente & fruit"},{"n":"sesamzaad","q":1,"u":"el","c":"Noten & zaden"}],"steps":["Snijd de tofu in reepjes, bak kort in een pan met wat tamari tot goudbruin.","Snijd wortel en komkommer in dunne reepjes (julienne).","Week een rijstpapiervel kort in lauw water, leg op een vochtige doek. Vul met tofu, groente, munt en koriander en rol strak op.","Herhaal voor alle rolletjes.","Maak een dip van amandelpasta, tamari, limoensap, sesamzaad en een scheutje water tot gewenste dikte."],"tip":"Gewone pindasaus valt af (pinda = peulvrucht). Amandelpasta is een laag-FODMAP, peulvrij alternatief.","c":42,"f":17,"serves":2,"emo":"🌯","hue":80},{"id":23,"t":"Warme quinoa-spinaziesalade met geroosterde paprika & walnoot","type":"lunch","min":30,"af":true,"p":21,"kcal":460,"tags":["airfryer","bowl","warm"],"ing":[{"n":"quinoa","q":150,"u":"g","c":"Granen & basis"},{"n":"rode paprika","q":2,"u":"st","c":"Groente & fruit"},{"n":"verse spinazie","q":100,"u":"g","c":"Groente & fruit"},{"n":"walnoten","q":50,"u":"g","c":"Noten & zaden"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"verse peterselie","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"}],"steps":["Snijd de paprika in repen, meng met olie en zout, airfryer 200°C, 12-14 min.","Kook de quinoa 15 min, pluis los.","Roer de spinazie door de warme quinoa zodat hij net slinkt.","Meng de geroosterde paprika, gehakte walnoot, citroensap en peterselie erdoor.","Bestrooi met hennepzaad en breng op smaak met zout en peper."],"tip":"Walnoten zijn laag-FODMAP en leveren goede vetten plus wat eiwit. Rooster ze even voor meer smaak.","c":45,"f":21,"serves":2,"emo":"🫑","hue":4},{"id":24,"t":"Airfryer courgettekoekjes (boekweitmeel) met kokos-kruidendip","type":"lunch","min":30,"af":true,"p":15,"kcal":380,"tags":["airfryer","groente","snack-lunch"],"ing":[{"n":"courgette","q":2,"u":"st","c":"Groente & fruit"},{"n":"boekweitmeel","q":80,"u":"g","c":"Granen & basis"},{"n":"verse dille","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"verse bieslook","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"kokosyoghurt","q":150,"u":"g","c":"Vocht & olie"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"pompoenpitten","q":2,"u":"el","c":"Noten & zaden"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"}],"steps":["Rasp de courgette grof, bestrooi met zout en knijp het vocht er na 10 min stevig uit.","Meng met boekweitmeel, gehakte dille, peper en 1 el olie tot een stevig beslag. Vorm platte koekjes.","Airfryer 190°C, 16-18 min, halverwege keren, tot goudbruin.","Roer kokosyoghurt met citroensap, bieslook en zout tot een frisse dip.","Serveer de koekjes met de dip en bestrooi met pompoenpit."],"tip":"Kies een ongezoete kokosyoghurt zonder additieven. Houd de portie rond 125 g per persoon.","c":40,"f":17,"serves":2,"emo":"🥞","hue":95},{"id":25,"t":"Boekweitbowl met airfryer-pompoen, boerenkool & pompoenpit","type":"lunch","min":35,"af":true,"p":18,"kcal":470,"tags":["airfryer","groente","bowl"],"ing":[{"n":"hokkaidopompoen","q":400,"u":"g","c":"Groente & fruit"},{"n":"boekweitgrutten","q":150,"u":"g","c":"Granen & basis"},{"n":"boerenkool","q":100,"u":"g","c":"Groente & fruit"},{"n":"pompoenpitten","q":4,"u":"el","c":"Noten & zaden"},{"n":"tahin","q":2,"u":"el","c":"Noten & zaden"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"}],"steps":["Snijd de pompoen in blokjes, meng met 1 el olie en zout, airfryer 200°C, 16-18 min.","Kook de boekweit 12-15 min, giet af.","Masseer de boerenkool met wat olie, zout en citroensap tot hij zacht wordt.","Maak een dressing van tahin, citroensap en water.","Schep boekweit in kommen met pompoen en boerenkool, lepel de tahindressing erover, strooi pompoenpit en hennep erover."],"tip":"Boerenkool masseren breekt de vezels en maakt hem rauw eetbaar en milder van smaak.","c":55,"f":20,"serves":2,"emo":"🥬","hue":120},{"id":26,"t":"Rijstnoedelsalade met tofu, komkommer, munt & sesam-limoen","type":"lunch","min":30,"af":true,"p":28,"kcal":480,"tags":["airfryer","eiwitrijk","fris"],"ing":[{"n":"rijstnoedels","q":150,"u":"g","c":"Granen & basis"},{"n":"stevige tofu","q":300,"u":"g","c":"Overig"},{"n":"komkommer","q":1,"u":"st","c":"Groente & fruit"},{"n":"wortel","q":2,"u":"st","c":"Groente & fruit"},{"n":"verse munt","q":0.5,"u":"bosje","c":"Kruiden & specerijen"},{"n":"verse koriander","q":0.5,"u":"bosje","c":"Kruiden & specerijen"},{"n":"limoen","q":2,"u":"st","c":"Groente & fruit"},{"n":"tamari (glutenvrij)","q":2,"u":"el","c":"Overig"},{"n":"sesamolie","q":1,"u":"el","c":"Vocht & olie"},{"n":"sesamzaad","q":2,"u":"el","c":"Noten & zaden"}],"steps":["Snijd tofu in blokjes, airfryer 200°C, 14 min tot krokant.","Week of kook de rijstnoedels volgens verpakking, spoel koud.","Snijd komkommer en wortel in dunne reepjes.","Meng limoensap, tamari en sesamolie tot dressing.","Meng noedels met groente, tofu, kruiden en dressing. Bestrooi met sesamzaad."],"tip":"Koude rijstnoedels plakken snel. Meng er na het spoelen meteen een paar druppels sesamolie door.","c":50,"f":18,"serves":2,"emo":"🍜","hue":88},{"id":27,"t":"Maïs-quinoasalade met paprika, koriander & limoen","type":"lunch","min":25,"af":true,"p":18,"kcal":430,"tags":["airfryer","bowl","fris"],"ing":[{"n":"quinoa","q":150,"u":"g","c":"Granen & basis"},{"n":"maïskolf","q":1,"u":"st","c":"Groente & fruit"},{"n":"rode paprika","q":1,"u":"st","c":"Groente & fruit"},{"n":"cherrytomaat","q":150,"u":"g","c":"Groente & fruit"},{"n":"verse koriander","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"limoen","q":2,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"pompoenpitten","q":3,"u":"el","c":"Noten & zaden"}],"steps":["Kook de quinoa 15 min, pluis los, laat afkoelen.","Snijd de maïs van de kolf en bak 10 min in de airfryer op 200°C tot licht geroosterd.","Snijd paprika in blokjes en halveer de cherrytomaten.","Meng quinoa, maïs, paprika, tomaat en gehakte koriander.","Breng op smaak met limoensap, olie, zout en peper en strooi pompoenpit erover."],"tip":"Houd het bij een halve maïskolf per persoon om laag-FODMAP te blijven.","c":55,"f":15,"serves":2,"emo":"🌽","hue":50},{"id":28,"t":"Airfryer aardappelpartjes met spinazie-omelet","type":"lunch","min":30,"af":true,"p":22,"kcal":470,"tags":["airfryer","af en toe ei","comfort"],"ing":[{"n":"vastkokende aardappel","q":400,"u":"g","c":"Groente & fruit"},{"n":"ei","q":3,"u":"st","c":"Overig"},{"n":"verse spinazie","q":80,"u":"g","c":"Groente & fruit"},{"n":"verse bieslook","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"pompoenpitten","q":2,"u":"el","c":"Noten & zaden"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"gerookt paprikapoeder","q":1,"u":"tl","c":"Kruiden & specerijen"}],"steps":["Snijd de aardappels in partjes, meng met 1 el olie, paprikapoeder en zout. Airfryer 200°C, 22-25 min.","Klop de eieren los met zout en peper.","Hak de spinazie fijn en roer erdoor.","Bak een dikke omelet in een pan met een scheutje olie, vouw dubbel.","Serveer de omelet met de aardappelpartjes, bestrooid met bieslook en pompoenpit."],"tip":"Tweede en laatste ei-recept. Wissel af met de eiwitrijke tofu-lunches op de andere dagen.","c":40,"f":24,"serves":2,"emo":"🍳","hue":46},{"id":29,"t":"Polentachips (airfryer) met tomaat-basilicumsalsa","type":"lunch","min":35,"af":true,"p":13,"kcal":390,"tags":["airfryer","crispy","snack-lunch"],"ing":[{"n":"polenta (maïsgries)","q":150,"u":"g","c":"Granen & basis"},{"n":"tomaat","q":3,"u":"st","c":"Groente & fruit"},{"n":"verse basilicum","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"olijfolie","q":3,"u":"el","c":"Vocht & olie"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"pompoenpitten","q":3,"u":"el","c":"Noten & zaden"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"}],"steps":["Kook de polenta dik volgens verpakking met zout. Stort uit op bakpapier in een laag van 1 cm en laat 20 min opstijven (of korter in de koelkast).","Snijd in repen of driehoeken, kwast met olie.","Airfryer 200°C, 16-18 min tot goudbruin en krokant aan de randen.","Snijd de tomaten klein, meng met gescheurde basilicum, citroensap, olie en zout tot een salsa.","Serveer de polentachips met de salsa en bestrooi met pompoenpit en hennep."],"tip":"Polenta van tevoren laten opstijven kan ook een dag eerder. 's Middags alleen nog snijden en airfryeren.","c":45,"f":17,"serves":2,"emo":"🍅","hue":6},{"id":30,"t":"Boerenkoolsalade met airfryer-zoete aardappel, granaatappel & pompoenpit","type":"lunch","min":35,"af":true,"p":16,"kcal":440,"tags":["airfryer","groente","feestelijk"],"ing":[{"n":"boerenkool","q":120,"u":"g","c":"Groente & fruit"},{"n":"zoete aardappel","q":1,"u":"st","c":"Groente & fruit"},{"n":"granaatappelpitjes","q":60,"u":"g","c":"Groente & fruit"},{"n":"pompoenpitten","q":4,"u":"el","c":"Noten & zaden"},{"n":"walnoten","q":40,"u":"g","c":"Noten & zaden"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":3,"u":"el","c":"Vocht & olie"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"}],"steps":["Snijd de zoete aardappel in blokjes, meng met 1 el olie en zout, airfryer 200°C, 16 min.","Masseer de boerenkool met 1 el olie, citroensap en zout tot hij zacht is.","Rooster walnoten en pompoenpitten kort droog en hak de walnoten grof.","Meng de boerenkool met zoete aardappel, granaatappelpitjes, noten en hennep.","Maak af met de rest van de olie en extra citroensap."],"tip":"Granaatappel (tot ~45 g) en zoete aardappel (~75 g) zijn laag-FODMAP in deze porties. Niet meer dan dat.","c":40,"f":24,"serves":2,"emo":"🍠","hue":25},{"id":31,"t":"Komkommer-quinoa tabouleh met peterselie & munt","type":"lunch","min":25,"af":false,"p":17,"kcal":400,"tags":["fris","bowl","meeneem"],"ing":[{"n":"quinoa","q":150,"u":"g","c":"Granen & basis"},{"n":"komkommer","q":1,"u":"st","c":"Groente & fruit"},{"n":"cherrytomaat","q":150,"u":"g","c":"Groente & fruit"},{"n":"verse peterselie","q":2,"u":"bosje","c":"Kruiden & specerijen"},{"n":"verse munt","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"citroen","q":2,"u":"st","c":"Groente & fruit"},{"n":"olijfolie","q":3,"u":"el","c":"Vocht & olie"},{"n":"hennepzaad","q":3,"u":"el","c":"Noten & zaden"}],"steps":["Kook de quinoa 15 min, pluis los en laat afkoelen.","Hak de peterselie en munt heel fijn (een echte tabouleh is bomvol kruiden).","Snijd komkommer in kleine blokjes en halveer de cherrytomaten.","Meng alles met citroensap, olie, zout en peper.","Roer het hennepzaad er vlak voor serveren door."],"tip":"Klassieke tabouleh gebruikt bulgur (tarwe). Quinoa maakt hem glutenvrij én eiwitrijker.","c":40,"f":19,"serves":2,"emo":"🌿","hue":115},{"id":32,"t":"Wortel-gembersoep met kokos & gebakken tempehblokjes","type":"lunch","min":35,"af":true,"p":24,"kcal":430,"tags":["airfryer","eiwitrijk","warm"],"ing":[{"n":"wortel","q":600,"u":"g","c":"Groente & fruit"},{"n":"tempeh","q":200,"u":"g","c":"Overig"},{"n":"kokosmelk","q":1,"u":"blik","c":"Vocht & olie"},{"n":"verse gember","q":4,"u":"cm","c":"Groente & fruit"},{"n":"kurkuma","q":1,"u":"tl","c":"Kruiden & specerijen"},{"n":"limoen","q":1,"u":"st","c":"Groente & fruit"},{"n":"verse koriander","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"pompoenpitten","q":3,"u":"el","c":"Noten & zaden"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"},{"n":"tamari (glutenvrij)","q":1,"u":"el","c":"Overig"}],"steps":["Snijd de wortel in stukken, kook ze gaar in water met geraspte gember en kurkuma (ca. 20 min).","Pureer met de kokosmelk tot een gladde soep, breng op smaak met limoensap en zout.","Snijd tempeh in blokjes, meng met tamari en olie, airfryer 190°C, 12 min tot krokant.","Rooster de pompoenpitten kort droog.","Schep de soep in kommen, leg de tempehblokjes erop en werk af met koriander en pompoenpit."],"tip":"De tempehblokjes geven de soep crunch én tillen het eiwit flink op. Maak een dubbele lading voor morgen.","c":35,"f":21,"serves":2,"emo":"🍲","hue":30},{"id":33,"t":"Hartige boekweitpannenkoek met spinazie & hennep","type":"lunch","min":25,"af":false,"p":18,"kcal":410,"tags":["groente","snel","plantaardig"],"ing":[{"n":"boekweitmeel","q":120,"u":"g","c":"Granen & basis"},{"n":"plantaardige (rijst)melk","q":250,"u":"ml","c":"Vocht & olie"},{"n":"verse spinazie","q":100,"u":"g","c":"Groente & fruit"},{"n":"verse bieslook","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"hennepzaad","q":4,"u":"el","c":"Noten & zaden"},{"n":"pompoenpitten","q":2,"u":"el","c":"Noten & zaden"},{"n":"olijfolie","q":2,"u":"el","c":"Vocht & olie"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"}],"steps":["Klop boekweitmeel met rijstmelk, een snuf zout en 2 el hennepzaad tot een glad, lopend beslag. Laat 10 min rusten.","Wok de spinazie kort tot geslonken en knijp uit.","Bak dunne pannenkoeken in een hete pan met wat olie.","Verdeel spinazie over de pannenkoeken, vouw dicht.","Bestrooi met de rest van het hennepzaad, pompoenpit, bieslook en een paar druppels citroen."],"tip":"Hennepzaad in het beslag verhoogt het eiwit zonder ei. Wil je het binden, voeg 1 el chiazaad toe.","c":45,"f":17,"serves":2,"emo":"🫓","hue":92},{"id":34,"t":"Airfryer tofu-nuggets met groene kruidendip","type":"lunch","min":30,"af":true,"p":32,"kcal":500,"tags":["airfryer","eiwitrijk","kindvriendelijk"],"ing":[{"n":"stevige tofu","q":400,"u":"g","c":"Overig"},{"n":"boekweitmeel","q":60,"u":"g","c":"Granen & basis"},{"n":"plantaardige (rijst)melk","q":60,"u":"ml","c":"Vocht & olie"},{"n":"verse peterselie","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"verse bieslook","q":1,"u":"bosje","c":"Kruiden & specerijen"},{"n":"kokosyoghurt","q":150,"u":"g","c":"Vocht & olie"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"gerookt paprikapoeder","q":1,"u":"tl","c":"Kruiden & specerijen"},{"n":"olijfolie","q":1,"u":"el","c":"Vocht & olie"}],"steps":["Snijd de tofu in nugget-stukjes en dep heel goed droog.","Haal door de rijstmelk en daarna door boekweitmeel met paprikapoeder, zout en peper.","Besprenkel met olie. Airfryer 200°C, 16 min, halverwege keren, tot krokant.","Roer kokosyoghurt met fijngehakte peterselie, bieslook, citroensap en zout tot een groene dip.","Serveer de nuggets warm met de dip."],"tip":"Deze vallen ook bij je tienerzoon en -dochter goed. Verdubbel gerust de portie.","c":42,"f":22,"serves":2,"emo":"🍤","hue":40},{"id":35,"t":"Banaan-hennep proteïne smoothiebowl met blauwe bes & pompoenpit","type":"lunch","min":10,"af":false,"p":34,"kcal":520,"tags":["eiwitrijk","ontbijt-lunch","snel"],"ing":[{"n":"banaan (stevig/onrijp)","q":2,"u":"st","c":"Groente & fruit"},{"n":"rijst- of henneppproteïne","q":2,"u":"schep","c":"Overig"},{"n":"hennepzaad","q":3,"u":"el","c":"Noten & zaden"},{"n":"blauwe bessen","q":150,"u":"g","c":"Groente & fruit"},{"n":"plantaardige (rijst)melk","q":250,"u":"ml","c":"Vocht & olie"},{"n":"chiazaad","q":1,"u":"el","c":"Noten & zaden"},{"n":"amandelpasta","q":2,"u":"el","c":"Noten & zaden"},{"n":"pompoenpitten","q":3,"u":"el","c":"Noten & zaden"}],"steps":["Doe de bananen, proteïnepoeder, rijstmelk, amandelpasta en de helft van het hennepzaad in de blender.","Blend dik en romig. Te dik? Scheutje rijstmelk erbij. Te dun? Voeg wat ijs of een stukje bevroren banaan toe.","Schep in twee kommen.","Top met blauwe bessen, de rest van het hennepzaad, chiazaad en pompoenpit.","Direct eten, lekker koud."],"tip":"Dit is je eiwit-vangnet. Een schep rijst- of henneppproteïne plus de zaden tilt deze bowl naar ~34 g per persoon. Onrijpe banaan is laag-FODMAP, overrijp niet.","c":50,"f":20,"serves":2,"emo":"🫐","hue":220},{"id":36,"t":"Vaste ochtendsmoothie","type":"smoothie","daily":true,"min":5,"af":false,"p":28,"kcal":560,"c":95,"f":9,"serves":1,"emo":"🍌","hue":50,"tags":["dagelijks","eiwitrijk","fruit"],"ing":[{"n":"banaan","q":3,"u":"st","c":"Groente & fruit"},{"n":"citroen","q":1,"u":"st","c":"Groente & fruit"},{"n":"verse spinazie","q":1,"u":"handvol","c":"Groente & fruit"},{"n":"blauwe bessen","q":60,"u":"g","c":"Groente & fruit"},{"n":"frambozen","q":40,"u":"g","c":"Groente & fruit"},{"n":"kiwi","q":1,"u":"st","c":"Groente & fruit"},{"n":"chiazaad","q":1,"u":"el","c":"Noten & zaden"},{"n":"rijst- of henneppproteïne","q":1,"u":"schep","c":"Overig"},{"n":"water of rijstmelk","q":250,"u":"ml","c":"Vocht & olie"}],"steps":["Doe alles in de blender met het water of de rijstmelk.","Blend tot glad en romig. Te dik? Scheutje extra vocht.","Direct drinken."],"tip":"Dit is jouw vaste basis. De app telt deze elke dag automatisch mee in de planner (per dag uit te zetten). Drie rijpe bananen is wel hoog-FODMAP. Bij darmklachten: terug naar 1 banaan en aanvullen met extra bessen."},{"id":37,"t":"Banaan-amandel proteïneshake","type":"smoothie","min":5,"af":false,"p":30,"kcal":430,"c":40,"f":17,"serves":1,"emo":"🥤","hue":35,"tags":["tussendoor","vullend","eiwitrijk"],"ing":[{"n":"banaan","q":1,"u":"st","c":"Groente & fruit"},{"n":"amandelpasta","q":2,"u":"el","c":"Noten & zaden"},{"n":"rijstmelk","q":250,"u":"ml","c":"Vocht & olie"},{"n":"rijst- of henneppproteïne","q":1,"u":"schep","c":"Overig"},{"n":"chiazaad","q":1,"u":"el","c":"Noten & zaden"},{"n":"kaneel","q":0.5,"u":"tl","c":"Kruiden & specerijen"}],"steps":["Doe alles in de blender.","Blend glad. Voeg ijsblokjes toe voor een dikkere shake.","Drinken rond je dip van half 4."],"tip":"Amandelpasta + chia + eiwitpoeder houden je uren vol. Je beste optie tegen de honger om half 4."},{"id":38,"t":"Blauwe bes-hennep smoothie","type":"smoothie","min":5,"af":false,"p":32,"kcal":400,"c":42,"f":13,"serves":1,"emo":"🫐","hue":220,"tags":["tussendoor","eiwitrijk","antioxidant"],"ing":[{"n":"banaan","q":1,"u":"st","c":"Groente & fruit"},{"n":"blauwe bessen","q":100,"u":"g","c":"Groente & fruit"},{"n":"hennepzaad","q":3,"u":"el","c":"Noten & zaden"},{"n":"rijstmelk","q":250,"u":"ml","c":"Vocht & olie"},{"n":"rijst- of henneppproteïne","q":1,"u":"schep","c":"Overig"},{"n":"chiazaad","q":1,"u":"el","c":"Noten & zaden"}],"steps":["Alles in de blender.","Blend tot diepblauw en romig.","Direct drinken."],"tip":"Hennepzaad is een complete eiwitbron met nootachtige smaak. Blauwe bessen zijn laag-FODMAP tot ~125 g."},{"id":39,"t":"Groene kracht-smoothie","type":"smoothie","min":5,"af":false,"p":30,"kcal":360,"c":38,"f":11,"serves":1,"emo":"🥬","hue":120,"tags":["tussendoor","eiwitrijk","groen"],"ing":[{"n":"banaan","q":1,"u":"st","c":"Groente & fruit"},{"n":"verse spinazie","q":1,"u":"handvol","c":"Groente & fruit"},{"n":"kiwi","q":1,"u":"st","c":"Groente & fruit"},{"n":"hennepzaad","q":2,"u":"el","c":"Noten & zaden"},{"n":"rijst- of henneppproteïne","q":1,"u":"schep","c":"Overig"},{"n":"chiazaad","q":1,"u":"el","c":"Noten & zaden"},{"n":"water","q":250,"u":"ml","c":"Vocht & olie"}],"steps":["Alles in de blender.","Blend tot egaal groen.","Drinken."],"tip":"Spinazie proef je nauwelijks maar levert ijzer en wat eiwit. Kiwi geeft frisheid en is laag-FODMAP."},{"id":40,"t":"Amandel-haver milkshake","type":"smoothie","min":5,"af":false,"p":31,"kcal":470,"c":50,"f":16,"serves":1,"emo":"🥛","hue":40,"tags":["tussendoor","extra vullend","eiwitrijk"],"ing":[{"n":"banaan","q":1,"u":"st","c":"Groente & fruit"},{"n":"amandelpasta","q":1,"u":"el","c":"Noten & zaden"},{"n":"glutenvrije havervlokken","q":3,"u":"el","c":"Granen & basis"},{"n":"rijstmelk","q":250,"u":"ml","c":"Vocht & olie"},{"n":"rijst- of henneppproteïne","q":1,"u":"schep","c":"Overig"},{"n":"kaneel","q":0.5,"u":"tl","c":"Kruiden & specerijen"}],"steps":["Laat de havervlokken 5 min in de rijstmelk weken voor een gladdere shake.","Doe alles in de blender en blend goed.","Drinken als je het langer wilt volhouden."],"tip":"De haver maakt dit de meest vullende van de set. Houd glutenvrije haver op ~3 el (laag-FODMAP)."},{"id":41,"t":"Frambozen-kokos smoothie","type":"smoothie","min":5,"af":false,"p":29,"kcal":420,"c":38,"f":18,"serves":1,"emo":"🍓","hue":340,"tags":["tussendoor","eiwitrijk","romig"],"ing":[{"n":"banaan","q":1,"u":"st","c":"Groente & fruit"},{"n":"frambozen","q":60,"u":"g","c":"Groente & fruit"},{"n":"kokosmelk","q":100,"u":"ml","c":"Vocht & olie"},{"n":"rijst- of henneppproteïne","q":1,"u":"schep","c":"Overig"},{"n":"chiazaad","q":1,"u":"el","c":"Noten & zaden"},{"n":"water","q":150,"u":"ml","c":"Vocht & olie"}],"steps":["Alles in de blender.","Blend tot roze en romig.","Drinken."],"tip":"Kokosmelk maakt 'm romig. Houd frambozen rond 60 g, dan blijf je laag-FODMAP."}];
+
+// Buiten Claude (bv. op Netlify) bestaat window.storage niet -> val terug op localStorage.
+if(typeof window!=='undefined' && !window.storage){
+  window.storage={
+    get:async(k)=>{const v=localStorage.getItem(k);return v===null?null:{key:k,value:v}},
+    set:async(k,v)=>{localStorage.setItem(k,v);return{key:k,value:v}},
+    delete:async(k)=>{localStorage.removeItem(k);return{key:k,deleted:true}},
+    list:async(p)=>{const keys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!p||k.indexOf(p)===0)keys.push(k)}return{keys}}
+  };
+}
+
+const MORNING_ID=36;
+const DEFAULT_GOALS={p:100,kcal:2200,c:250,f:70};
+let favs=new Set(),cart={},checked=new Set();
+let plan={},goals={...DEFAULT_GOALS},morningOn=true,skipMorning=new Set();
+let view="recepten",filter="alles",search="",weekOffset=0,selDate=todayKey();
+let photos={},curDetail=null;
+const byId={};RECIPES.forEach(r=>byId[r.id]=r);
+function hasPhoto(id){return !!photos[id]}
+function photoBg(id){return photos[id]?`background-image:url("${photos[id]}")`:''}
+
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ---- storage ---- */
+async function sg(k){try{const r=await window.storage.get(k);return r&&r.value?r.value:null}catch(e){return null}}
+async function ss(k,v){try{await window.storage.set(k,v)}catch(e){}}
+async function loadState(){
+  let v;
+  if(v=await sg('favs'))favs=new Set(JSON.parse(v));
+  if(v=await sg('cart'))cart=JSON.parse(v);
+  else if(v=await sg('sel')){const old=JSON.parse(v);cart={};old.forEach(id=>cart[id]=1);}
+  if(v=await sg('checked'))checked=new Set(JSON.parse(v));
+  if(v=await sg('plan'))plan=JSON.parse(v);
+  if(v=await sg('goals'))goals={...DEFAULT_GOALS,...JSON.parse(v)};
+  if(v=await sg('morningOn'))morningOn=v==='1';
+  if(v=await sg('skipMorning'))skipMorning=new Set(JSON.parse(v));
+}
+const saveFavs=()=>ss('favs',JSON.stringify([...favs]));
+const saveCart=()=>ss('cart',JSON.stringify(cart));
+const saveChecked=()=>ss('checked',JSON.stringify([...checked]));
+const savePlan=()=>ss('plan',JSON.stringify(plan));
+const saveGoals=()=>ss('goals',JSON.stringify(goals));
+const saveMorning=()=>ss('morningOn',morningOn?'1':'0');
+const saveSkip=()=>ss('skipMorning',JSON.stringify([...skipMorning]));
+
+/* ---- foto's ---- */
+async function loadPhotos(){
+  try{
+    const r=await window.storage.list('photo:');
+    if(r&&r.keys){for(const k of r.keys){try{const g=await window.storage.get(k);if(g&&g.value){const id=k.indexOf('photo:')===0?k.slice(6):k;photos[id]=g.value}}catch(e){}}}
+  }catch(e){}
+}
+async function storePhoto(id,url){
+  try{await window.storage.set('photo:'+id,url);return true}
+  catch(e){return false}
+}
+async function removePhoto(id){delete photos[id];try{await window.storage.delete('photo:'+id)}catch(e){}}
+function processPhoto(file,id){
+  if(!file)return;
+  toast('Foto verwerken…');
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=async()=>{
+      const tries=[[820,0.62],[640,0.55],[480,0.5],[360,0.45]];
+      let saved=false,shown=false;
+      for(const t of tries){
+        const max=t[0],q=t[1];
+        let w=img.width,h=img.height;const s=Math.min(1,max/Math.max(w,h));
+        w=Math.max(1,Math.round(w*s));h=Math.max(1,Math.round(h*s));
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);
+        let url;try{url=c.toDataURL('image/jpeg',q)}catch(_){url=null}
+        if(!url)continue;
+        photos[id]=url;shown=true;
+        if(await storePhoto(id,url)){saved=true;break}
+      }
+      if(curDetail===id)openDetail(id);
+      renderRecepten();if(view==='planner')renderPlanner();
+      toast(saved?'Foto opgeslagen':(shown?'Foto getoond, opslaan lukte niet':'Kon de foto niet verwerken'));
+    };
+    img.onerror=()=>toast('Kon de foto niet lezen.');
+    img.src=reader.result;
+  };
+  reader.onerror=()=>toast('Kon het bestand niet openen.');
+  reader.readAsDataURL(file);
+}
+
+/* ---- dates ---- */
+const WD=['ma','di','wo','do','vr','za','zo'];
+const WDF=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+const MN=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+function todayKey(){return dk(new Date())}
+function dk(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${da}`}
+function mondayOf(d){const x=new Date(d);const off=(x.getDay()+6)%7;x.setDate(x.getDate()-off);x.setHours(0,0,0,0);return x}
+function parseKey(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
+function longDate(k){const d=parseKey(k);return `${WDF[d.getDay()]} ${d.getDate()} ${MN[d.getMonth()]}`}
+
+/* ---- helpers ---- */
+function typeLabel(t){return t==="lunch"?"Lunch":t==="diner"?"Diner":t==="smoothie"?"Smoothie":"Lunch & diner"}
+function servesLabel(r){return r.serves===1?"1 portie":"voor 2"}
+function fmtQty(q,u){
+  if(q==null)return"naar smaak";
+  let n=Number.isInteger(q)?q:Math.round(q*100)/100;
+  if(u==="st"&&n===0.5)return"½";
+  if(u==="")return""+n;
+  return n+" "+u;
+}
+function heartSvg(on){return`<svg width="18" height="18" viewBox="0 0 24 24" fill="${on?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.3C.7 9.3 1.6 5.6 5 4.6 7.3 3.9 9.5 5 12 7.6 14.5 5 16.7 3.9 19 4.6c3.4 1 4.3 4.7 3 7.1C19.5 16.1 12 21 12 21z"/></svg>`}
+
+function dayIds(date){return plan[date]?plan[date].slice():[]}
+function dayTotals(date){
+  let t={p:0,kcal:0,c:0,f:0};
+  dayIds(date).forEach(id=>{const r=byId[id];if(r){t.p+=r.p;t.kcal+=r.kcal;t.c+=r.c;t.f+=r.f}});
+  if(morningOn&&!skipMorning.has(date)){const m=byId[MORNING_ID];t.p+=m.p;t.kcal+=m.kcal;t.c+=m.c;t.f+=m.f}
+  return t;
+}
+function dayMet(date){return dayTotals(date).p>=goals.p}
+
+/* ---- toast ---- */
+let toastT;
+function toast(msg){const e=$('#toast');e.textContent=msg;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),1600)}
+
+/* ================= RECEPTEN ================= */
+function matches(r){
+  if(filter==="favorieten")return favs.has(r.id);
+  if(filter==="lunch")return r.type==="lunch"||r.type==="beide";
+  if(filter==="diner")return r.type==="diner"||r.type==="beide";
+  if(filter==="smoothie")return r.type==="smoothie";
+  if(filter==="airfryer")return r.af;
+  if(filter==="eiwitrijk")return r.p>=28;
+  return true;
+}
+function renderRecepten(){
+  let list=RECIPES.filter(matches);
+  if(search){const q=search.toLowerCase();list=list.filter(r=>(r.t+" "+r.tags.join(" ")+" "+r.ing.map(x=>x.n).join(" ")).toLowerCase().includes(q))}
+  $('#count').textContent=`${list.length} ${list.length===1?'recept':'recepten'}`;
+  const g=$('#grid');
+  if(!list.length){g.style.display='block';g.innerHTML=`<div class="empty"><div class="em-title">Niks gevonden</div><div>Pas je filter of zoekterm aan.</div></div>`;return}
+  g.style.display='grid';
+  g.innerHTML=list.map(r=>`
+    <article class="card" data-open="${r.id}">
+      <div class="tile ${hasPhoto(r.id)?'hasphoto':''}" style="--h:${r.hue};${photoBg(r.id)}">
+        <span class="serves">${esc(servesLabel(r))}</span>
+        <button class="heart" data-fav="${r.id}" data-on="${favs.has(r.id)}" aria-label="Favoriet">${heartSvg(favs.has(r.id))}</button>
+        ${hasPhoto(r.id)?'':`<span class="emo">${r.emo}</span>`}
+      </div>
+      <div class="card-in">
+        <div class="kicker">${esc(typeLabel(r.type))}</div>
+        <h2>${esc(r.t)}</h2>
+        <div class="mini"><span class="p">${r.p} g eiwit</span><span>${r.kcal} kcal</span>${r.af?'<span class="af">◷ airfryer</span>':''}</div>
+        <button class="btn-list" data-list="${r.id}" data-on="${cartCount(r.id)>0}">${cartCount(r.id)>0?'✓ op lijst':'+ lijst'}</button>
+      </div>
+    </article>`).join("");
+}
+
+/* ================= DETAIL ================= */
+function openDetail(id){
+  const r=byId[id];if(!r)return;
+  curDetail=id;
+  $('#sheet-body').innerHTML=`
+    <div class="det-tile ${hasPhoto(r.id)?'hasphoto':''}" style="--h:${r.hue};${photoBg(r.id)}">
+      ${hasPhoto(r.id)?'':`<span class="emo">${r.emo}</span>`}
+      <div class="camrow">
+        <button class="cambtn" data-cam><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L19 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z" transform="translate(0 1)"/><circle cx="12" cy="13" r="3.4"/></svg>${hasPhoto(r.id)?'Nieuwe foto':'Foto maken'}</button>
+        ${hasPhoto(r.id)?`<button class="camdel" data-delphoto aria-label="Foto verwijderen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></button>`:''}
+      </div>
+      <input type="file" accept="image/*" id="cam-input" class="cam-input" hidden>
+    </div>
+    <div class="det-pad">
+      <div class="kicker">${esc(typeLabel(r.type))} · ${esc(servesLabel(r))}</div>
+      <h2>${esc(r.t)}</h2>
+      <div class="stat-row">
+        <div class="stat"><span class="v">${r.p} g</span><span class="l">eiwit</span></div>
+        <div class="stat"><span class="v">${r.c} g</span><span class="l">koolh.</span></div>
+        <div class="stat"><span class="v">${r.f} g</span><span class="l">vet</span></div>
+        <div class="stat"><span class="v">${r.kcal}</span><span class="l">kcal</span></div>
+        <div class="stat"><span class="v">${r.min}'</span><span class="l">tijd</span></div>
+      </div>
+      <div class="det-actions">
+        <button class="da plan" data-plan="${r.id}">＋ Inplannen</button>
+        <button class="da primary" data-list="${r.id}" data-on="${cartCount(r.id)>0}">${cartCount(r.id)>0?'✓ Op lijst':'＋ Boodschappen'}</button>
+        <button class="da fav" data-fav="${r.id}" data-on="${favs.has(r.id)}">${heartSvg(favs.has(r.id))} ${favs.has(r.id)?'Favoriet':'Bewaar'}</button>
+      </div>
+      <div class="sec-title">Ingrediënten · ${esc(servesLabel(r))}</div>
+      <ul class="ingr">${r.ing.map(it=>`<li><span>${esc(it.n)}</span><span class="amt">${esc(it.q==null?'naar smaak':fmtQty(it.q,it.u))}</span></li>`).join("")}</ul>
+      <div class="sec-title">Bereiding</div>
+      <ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+      <div class="tip"><b>Tip.</b> ${esc(r.tip)}</div>
+    </div>`;
+  openSheet('#sheet');
+}
+
+/* ================= PLANNER ================= */
+function renderPlanner(){
+  const wrap=$('#view-planner');
+  const ws=new Date(mondayOf(new Date()).getTime()+weekOffset*7*86400000);
+  const days=[...Array(7)].map((_,k)=>{const d=new Date(ws.getTime()+k*86400000);return dk(d)});
+  const tk=todayKey();
+  const t=dayTotals(selDate);
+  const pct=Math.min(100,Math.round(t.p/goals.p*100));
+  const met=t.p>=goals.p;
+  const need=Math.max(0,goals.p-t.p);
+  const ids=dayIds(selDate);
+  const showMorning=morningOn&&!skipMorning.has(selDate);
+
+  wrap.innerHTML=`
+  <div class="pl-wrap">
+    <h2 class="ph">Planner</h2>
+    <p class="sub" style="color:var(--ink-soft);font-size:14px;margin:0 0 16px">Plan je dag en hou je eiwitdoel bij. Het kroontje verschijnt zodra je doel gehaald is.</p>
+
+    <div class="goalcard">
+      <h3>Dagdoel · per persoon</h3>
+      <div class="goals">
+        <div class="goalfield"><label>Eiwit (g)</label><input type="number" inputmode="numeric" id="g-p" value="${goals.p}"></div>
+        <div class="goalfield"><label>Kcal</label><input type="number" inputmode="numeric" id="g-kcal" value="${goals.kcal}"></div>
+        <div class="goalfield"><label>Koolh (g)</label><input type="number" inputmode="numeric" id="g-c" value="${goals.c}"></div>
+        <div class="goalfield"><label>Vet (g)</label><input type="number" inputmode="numeric" id="g-f" value="${goals.f}"></div>
+      </div>
+      <div class="morning-toggle">
+        <span>🍌 Vaste ochtendsmoothie elke dag meetellen</span>
+        <button class="tg" id="tg-morning" data-on="${morningOn}" aria-label="Aan/uit"></button>
+      </div>
+    </div>
+
+    <div class="weekrow">
+      <button class="weeknav" id="wk-prev" aria-label="Vorige week"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="days">${days.map(d=>{
+        const dd=parseKey(d);const m=dayMet(d);const has=dayIds(d).length>0;
+        return `<button class="day" data-day="${d}" data-sel="${d===selDate}" data-today="${d===tk}">
+          ${m?'<span class="crown">👑</span>':''}
+          <span class="dw">${WD[(dd.getDay()+6)%7]}</span>
+          <span class="dn">${dd.getDate()}</span>
+          ${has&&!m?'<span class="pdot"></span>':''}
+        </button>`}).join("")}</div>
+      <button class="weeknav" id="wk-next" aria-label="Volgende week"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+
+    <div class="daypanel">
+      <h3 class="dp-date">${met?'👑 ':''}${esc(longDate(selDate))}</h3>
+      <div class="pbar-wrap">
+        <div class="pbar-top"><span class="lab">Eiwit</span><span>${met?`<span class="done">${t.p} g · doel gehaald</span>`:`<span class="done">${t.p} g</span> <span class="need">nog ${need} g</span>`}</span></div>
+        <div class="pbar ${met?'met':''}"><i style="width:${pct}%"></i></div>
+      </div>
+      <div class="macmini">
+        <div class="m"><div class="mv">${t.kcal}</div><div class="ml">van ${goals.kcal} kcal</div></div>
+        <div class="m"><div class="mv">${t.c} g</div><div class="ml">van ${goals.c} koolh</div></div>
+        <div class="m"><div class="mv">${t.f} g</div><div class="ml">van ${goals.f} vet</div></div>
+      </div>
+      ${met?'<div class="crown-line">👑 Top. Je eiwitdoel voor deze dag is gehaald.</div>':''}
+      <ul class="planlist">
+        ${showMorning?`<li class="morning" data-open="${MORNING_ID}"><span class="pemo ${hasPhoto(MORNING_ID)?'hasphoto':''}" style="--h:50;${photoBg(MORNING_ID)}">${hasPhoto(MORNING_ID)?'':'🍌'}</span><span class="pn">Vaste ochtendsmoothie<small>${byId[MORNING_ID].p} g eiwit · vast</small></span><button class="prm" data-skipmorning="${selDate}" aria-label="Vandaag overslaan">×</button></li>`:''}
+        ${ids.map((id,idx)=>{const r=byId[id];return `<li data-open="${r.id}"><span class="pemo ${hasPhoto(r.id)?'hasphoto':''}" style="--h:${r.hue};${photoBg(r.id)}">${hasPhoto(r.id)?'':r.emo}</span><span class="pn">${esc(r.t)}<small>${r.p} g eiwit · ${r.kcal} kcal</small></span><button class="prm" data-rmday="${idx}" aria-label="Verwijder">×</button></li>`}).join("")}
+        ${(!showMorning&&!ids.length)?'<li style="border:none;color:var(--ink-soft);font-size:14px;padding:14px 0">Nog niks gepland voor deze dag.</li>':''}
+      </ul>
+      <button class="addday" id="add-to-day">＋ Voeg recept toe</button>
+      ${dayCartIds(selDate).length?`<button class="dayshop" id="day-to-cart"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M5 8h14l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Zet boodschappen van deze dag op de lijst</button>`:''}
+    </div>
+  </div>`;
+}
+
+/* ================= SHOPPING ================= */
+function buildShopping(){
+  const items={};
+  Object.entries(cart).forEach(([id,cnt])=>{const r=byId[id];if(!r)return;r.ing.forEach(it=>{const key=it.n+"||"+it.u+"||"+it.c;if(!items[key])items[key]={n:it.n,u:it.u,c:it.c,q:0,naar:false};if(it.q==null)items[key].naar=true;else items[key].q+=it.q*cnt})});
+  const order=["Groente & fruit","Noten & zaden","Granen & basis","Kruiden & specerijen","Vocht & olie","Overig"];
+  const byCat={};order.forEach(c=>byCat[c]=[]);
+  Object.entries(items).forEach(([key,v])=>{(byCat[v.c]=byCat[v.c]||[]).push({key,...v})});
+  order.forEach(c=>byCat[c].sort((a,b)=>a.n.localeCompare(b.n,'nl')));
+  return{byCat,order};
+}
+function renderShopping(){
+  const wrap=$('#view-lijst');
+  const entries=Object.entries(cart).map(([id,cnt])=>({r:byId[id],cnt})).filter(x=>x.r);
+  if(!entries.length){
+    wrap.innerHTML=`<div class="shop-wrap"><h2>Boodschappenlijst</h2><div class="empty"><div class="em-title">Je lijst is leeg</div><div>Tik bij een recept op <b>+ lijst</b>, of zet in de <b>Planner</b> een hele dag in één klik op de lijst. Alles wordt automatisch samengevoegd en opgeteld.</div></div></div>`;return;
+  }
+  const{byCat,order}=buildShopping();
+  let cats="";
+  order.forEach(c=>{const arr=byCat[c];if(!arr||!arr.length)return;
+    cats+=`<div class="catblock"><h3>${esc(c)}</h3><ul class="shoplist">${arr.map(it=>{
+      const amt=it.naar&&it.q===0?"naar smaak":(it.naar?fmtQty(it.q,it.u)+" +":fmtQty(it.q,it.u));
+      const ck=checked.has(it.key);
+      return `<li data-checked="${ck}"><button class="cb" data-check="${esc(it.key)}">${ck?'✓':''}</button><span class="nm">${esc(it.n)}</span><span class="amt">${esc(amt)}</span></li>`;
+    }).join("")}</ul></div>`});
+  wrap.innerHTML=`<div class="shop-wrap">
+    <h2>Boodschappenlijst</h2>
+    <p class="sub">${entries.length} ${entries.length===1?'recept':'recepten'} gecombineerd</p>
+    <div class="selrecipes">${entries.map(({r,cnt})=>`<span class="selchip"><span>${esc(r.t)}${cnt>1?' ×'+cnt:''}</span><button data-rm="${r.id}" aria-label="Verwijder">×</button></span>`).join("")}</div>
+    ${cats}
+    <button class="clearbtn" id="clearList">Lijst leegmaken</button>
+  </div>`;
+}
+
+/* ================= PICKER (dag of recept) ================= */
+let pickRecipeFor=null;       // recipe id -> kies dag
+function openDayPicker(id){
+  pickRecipeFor=id;
+  const tk=todayKey();
+  const ws=mondayOf(new Date());
+  const days=[...Array(10)].map((_,k)=>dk(new Date(ws.getTime()+(((new Date()-ws)/86400000|0)+k)*86400000)));
+  // 10 dagen vanaf vandaag
+  const start=new Date();start.setHours(0,0,0,0);
+  const list=[...Array(10)].map((_,k)=>dk(new Date(start.getTime()+k*86400000)));
+  $('#pick-title').textContent="Plan op welke dag?";
+  $('#pick-body').innerHTML=`<div class="pickdays">${list.map(d=>{
+    const dd=parseKey(d);const lbl=d===tk?'Vandaag':(WDF[dd.getDay()]);
+    return `<button class="pickday ${d===tk?'today':''}" data-pickday="${d}">${esc(lbl[0].toUpperCase()+lbl.slice(1))} <small>${dd.getDate()} ${MN[dd.getMonth()]}</small></button>`;
+  }).join("")}</div>`;
+  openSheet('#pick');
+}
+function openRecipePicker(){
+  pickRecipeFor=null;
+  $('#pick-title').textContent="Recept toevoegen aan "+longDate(selDate);
+  $('#pick-body').innerHTML=`
+    <div class="pickfilters chips" id="pick-chips">
+      <button class="chip" data-pf="alles" aria-pressed="true">Alles</button>
+      <button class="chip" data-pf="lunch" aria-pressed="false">Lunch</button>
+      <button class="chip" data-pf="diner" aria-pressed="false">Diner</button>
+      <button class="chip" data-pf="smoothie" aria-pressed="false">Smoothie</button>
+      <button class="chip" data-pf="eiwitrijk" aria-pressed="false">Eiwitrijk</button>
+    </div>
+    <ul class="picklist" id="picklist"></ul>`;
+  renderPickList("alles");
+  openSheet('#pick');
+}
+function renderPickList(pf){
+  const list=RECIPES.filter(r=>{
+    if(pf==="lunch")return r.type==="lunch"||r.type==="beide";
+    if(pf==="diner")return r.type==="diner"||r.type==="beide";
+    if(pf==="smoothie")return r.type==="smoothie";
+    if(pf==="eiwitrijk")return r.p>=28;
+    return true;
+  });
+  $('#picklist').innerHTML=list.map(r=>`<li data-open="${r.id}"><span class="pemo ${hasPhoto(r.id)?'hasphoto':''}" style="--h:${r.hue};${photoBg(r.id)}">${hasPhoto(r.id)?'':r.emo}</span><span class="pn">${esc(r.t)}<small>${r.p} g eiwit · ${esc(typeLabel(r.type))}</small></span><button class="padd" data-addrecipe="${r.id}" aria-label="Toevoegen">＋</button></li>`).join("");
+}
+
+/* ================= SHEETS ================= */
+function openSheet(sel){$(sel).classList.add('open');$(sel+'-bg').classList.add('open');$(sel).scrollTop=0;document.body.style.overflow='hidden'}
+function closeSheet(sel){$(sel).classList.remove('open');$(sel+'-bg').classList.remove('open');if(!document.querySelector('.sheet.open'))document.body.style.overflow=''}
+
+/* ================= VIEW SWITCH ================= */
+function showView(v){
+  view=v;
+  $('#view-recepten').style.display=v==='recepten'?'block':'none';
+  $('#header-recepten').style.display=v==='recepten'?'block':'none';
+  $('#view-planner').style.display=v==='planner'?'block':'none';
+  $('#view-lijst').style.display=v==='lijst'?'block':'none';
+  $$('.tabbar button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===v));
+  if(v==='planner')renderPlanner();
+  if(v==='lijst')renderShopping();
+  window.scrollTo(0,0);
+}
+function updateBadge(){const b=$('#badge-lijst');if(b){const n=Object.keys(cart).length;b.style.display=n?'flex':'none';b.textContent=n}}
+
+/* ================= ACTIONS ================= */
+function toggleFav(id){favs.has(id)?favs.delete(id):favs.add(id);saveFavs()}
+function cartCount(id){return cart[id]||0}
+function cartToggle(id){if(cart[id])delete cart[id];else cart[id]=1;saveCart();updateBadge()}
+function cartAdd(id,n){cart[id]=(cart[id]||0)+(n||1);saveCart();updateBadge()}
+function cartRemoveAll(id){delete cart[id];saveCart();updateBadge()}
+function addToDay(date,id){if(!plan[date])plan[date]=[];plan[date].push(id);savePlan()}
+function dayCartIds(date){const ids=dayIds(date);if(morningOn&&!skipMorning.has(date))ids.unshift(MORNING_ID);return ids}
+function addDayToCart(date){dayCartIds(date).forEach(id=>cartAdd(id,1))}
+
+/* ================= EVENTS ================= */
+function bind(){
+  // chips recepten
+  $('#chips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;filter=c.dataset.filter;$$('#chips .chip').forEach(x=>x.setAttribute('aria-pressed',x===c));renderRecepten()});
+  $('#search').addEventListener('input',e=>{search=e.target.value.trim();renderRecepten()});
+
+  // grid
+  $('#grid').addEventListener('click',e=>{
+    const fav=e.target.closest('[data-fav]'),lst=e.target.closest('[data-list]'),op=e.target.closest('[data-open]');
+    if(fav){e.stopPropagation();toggleFav(+fav.dataset.fav);renderRecepten();return}
+    if(lst){e.stopPropagation();cartToggle(+lst.dataset.list);renderRecepten();return}
+    if(op){openDetail(+op.dataset.open)}
+  });
+
+  // detail
+  $('#sheet-body').addEventListener('click',e=>{
+    const fav=e.target.closest('[data-fav]'),lst=e.target.closest('[data-list]'),pl=e.target.closest('[data-plan]');
+    const cam=e.target.closest('[data-cam]'),delp=e.target.closest('[data-delphoto]');
+    if(cam){const inp=$('#cam-input');if(inp)inp.click();return}
+    if(delp){const id=curDetail;removePhoto(id).then(()=>{if(curDetail===id)openDetail(id);renderRecepten();if(view==='planner')renderPlanner();toast('Foto verwijderd')});return}
+    if(fav){const id=+fav.dataset.fav;toggleFav(id);openDetail(id);renderRecepten();return}
+    if(lst){const id=+lst.dataset.list;cartToggle(id);openDetail(id);renderRecepten();return}
+    if(pl){openDayPicker(+pl.dataset.plan);return}
+  });
+  $('#sheet-body').addEventListener('change',e=>{
+    if(e.target.id==='cam-input'&&e.target.files&&e.target.files[0]){processPhoto(e.target.files[0],curDetail);e.target.value=''}
+  });
+  $('#sheet-back').addEventListener('click',()=>closeSheet('#sheet'));
+  $('#sheet-bg').addEventListener('click',()=>closeSheet('#sheet'));
+
+  // planner (delegated on container, re-rendered each time)
+  $('#view-planner').addEventListener('click',e=>{
+    const day=e.target.closest('[data-day]');
+    if(day){selDate=day.dataset.day;renderPlanner();return}
+    if(e.target.closest('#wk-prev')){weekOffset--;renderPlanner();return}
+    if(e.target.closest('#wk-next')){weekOffset++;renderPlanner();return}
+    const tg=e.target.closest('#tg-morning');
+    if(tg){morningOn=!morningOn;saveMorning();renderPlanner();return}
+    const sk=e.target.closest('[data-skipmorning]');
+    if(sk){const d=sk.dataset.skipmorning;skipMorning.add(d);saveSkip();renderPlanner();return}
+    const rm=e.target.closest('[data-rmday]');
+    if(rm){const idx=+rm.dataset.rmday;plan[selDate].splice(idx,1);if(!plan[selDate].length)delete plan[selDate];savePlan();renderPlanner();return}
+    const op=e.target.closest('[data-open]');
+    if(op){openDetail(+op.dataset.open);return}
+    if(e.target.closest('#add-to-day')){openRecipePicker();return}
+    if(e.target.closest('#day-to-cart')){addDayToCart(selDate);renderPlanner();toast('Boodschappen van '+longDate(selDate)+' toegevoegd');return}
+  });
+  // goal inputs (change)
+  $('#view-planner').addEventListener('change',e=>{
+    if(e.target.id==='g-p'){goals.p=Math.max(1,+e.target.value||DEFAULT_GOALS.p)}
+    else if(e.target.id==='g-kcal'){goals.kcal=Math.max(1,+e.target.value||DEFAULT_GOALS.kcal)}
+    else if(e.target.id==='g-c'){goals.c=Math.max(1,+e.target.value||DEFAULT_GOALS.c)}
+    else if(e.target.id==='g-f'){goals.f=Math.max(1,+e.target.value||DEFAULT_GOALS.f)}
+    else return;
+    saveGoals();renderPlanner();
+  });
+
+  // shopping
+  $('#view-lijst').addEventListener('click',e=>{
+    const rm=e.target.closest('[data-rm]'),ch=e.target.closest('[data-check]'),clr=e.target.closest('#clearList');
+    if(rm){cartRemoveAll(+rm.dataset.rm);renderShopping();return}
+    if(ch){const k=ch.dataset.check;checked.has(k)?checked.delete(k):checked.add(k);saveChecked();renderShopping();return}
+    if(clr){cart={};checked.clear();saveCart();saveChecked();updateBadge();renderShopping();return}
+  });
+
+  // picker
+  $('#pick-body').addEventListener('click',e=>{
+    const pd=e.target.closest('[data-pickday]');
+    if(pd){const d=pd.dataset.pickday;addToDay(d,pickRecipeFor);closeSheet('#pick');toast('Ingepland op '+longDate(d));return}
+    const ar=e.target.closest('[data-addrecipe]');
+    if(ar){addToDay(selDate,+ar.dataset.addrecipe);renderPlanner();toast(byId[+ar.dataset.addrecipe].t.split(' ').slice(0,3).join(' ')+'… toegevoegd');return}
+    const opk=e.target.closest('[data-open]');
+    if(opk){openDetail(+opk.dataset.open);return}
+    const pf=e.target.closest('[data-pf]');
+    if(pf){$$('#pick-chips .chip').forEach(x=>x.setAttribute('aria-pressed',x===pf));renderPickList(pf.dataset.pf);return}
+  });
+  $('#pick-back').addEventListener('click',()=>closeSheet('#pick'));
+  $('#pick-bg').addEventListener('click',()=>closeSheet('#pick'));
+
+  // tabbar
+  $('#tabbar').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showView(b.dataset.tab)});
+}
+
+/* ================= BOOT ================= */
+async function boot(){
+  await loadState();
+  await loadPhotos();
+  $('#app').innerHTML=`
+    <header id="header-recepten">
+      <div class="wordmark"><h1>Sterk Bord</h1><span class="dot"></span></div>
+      <div class="tagline">plantaardig · glutenvrij · laag-fodmap · airfryer · eiwitrijk</div>
+      <div class="search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="Zoek recept of ingrediënt…" autocomplete="off">
+      </div>
+    </header>
+
+    <div id="view-recepten">
+      <div class="chips" id="chips">
+        <button class="chip" data-filter="alles" aria-pressed="true">Alles</button>
+        <button class="chip" data-filter="lunch" aria-pressed="false">Lunch</button>
+        <button class="chip" data-filter="diner" aria-pressed="false">Diner</button>
+        <button class="chip" data-filter="smoothie" aria-pressed="false">Smoothies</button>
+        <button class="chip" data-filter="airfryer" aria-pressed="false">Airfryer</button>
+        <button class="chip" data-filter="eiwitrijk" aria-pressed="false">Eiwitrijk</button>
+        <button class="chip fav" data-filter="favorieten" aria-pressed="false">Favorieten</button>
+      </div>
+      <main><div class="count" id="count"></div><div class="grid" id="grid"></div></main>
+    </div>
+
+    <div id="view-planner" style="display:none"></div>
+    <div id="view-lijst" style="display:none"></div>
+
+    <nav class="tabbar" id="tabbar">
+      <button data-tab="recepten" aria-selected="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Recepten</button>
+      <button data-tab="planner" aria-selected="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Planner</button>
+      <button data-tab="lijst" aria-selected="false">
+        <span class="nbadge" id="badge-lijst" style="display:none">0</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M5 8h14l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Lijst</button>
+    </nav>
+
+    <div class="sheet-bg" id="sheet-bg"></div>
+    <div class="sheet" id="sheet">
+      <div class="sheet-top"><button class="back" id="sheet-back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"/></svg>Terug</button></div>
+      <div class="sheet-body" id="sheet-body"></div>
+    </div>
+
+    <div class="sheet-bg" id="pick-bg"></div>
+    <div class="sheet" id="pick">
+      <div class="sheet-top"><button class="back" id="pick-back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"/></svg>Terug</button><strong id="pick-title" style="font-family:var(--serif);font-weight:600;font-size:17px"></strong></div>
+      <div class="sheet-body" id="pick-body"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  `;
+  bind();
+  renderRecepten();
+  updateBadge();
+}
+boot();
+</script>
