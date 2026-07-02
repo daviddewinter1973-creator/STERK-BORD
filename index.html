@@ -2,6 +2,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Sterk Bord">
+<meta name="theme-color" content="#3E5230">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="icon" type="image/png" href="/icon-180.png">
 <title>Sterk Bord</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,6 +100,11 @@
   .da.fav{color:var(--aubergine)}
   .da.fav[data-on="true"]{background:var(--aubergine);color:#fff;border-color:var(--aubergine)}
   .da.plan{color:var(--olive)}
+  .portsel{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 4px}
+  .portlab{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--ink-soft);text-transform:uppercase}
+  .portbtns{display:flex;gap:6px}
+  .portbtn{width:42px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--surface);font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink-soft)}
+  .portbtn[data-on="true"]{background:var(--olive);color:#fff;border-color:var(--olive)}
   .sec-title{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin:24px 0 12px;display:flex;align-items:center;gap:10px}
   .sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
   ul.ingr{list-style:none;margin:0;padding:0}
@@ -228,7 +236,7 @@ const DEFAULT_GOALS={p:100,kcal:2200,c:250,f:70};
 let favs=new Set(),cart={},checked=new Set();
 let plan={},goals={...DEFAULT_GOALS},morningOn=true,skipMorning=new Set();
 let view="recepten",filter="alles",search="",weekOffset=0,selDate=todayKey();
-let photos={},curDetail=null;
+let photos={},curDetail=null,servings={};
 const byId={};RECIPES.forEach(r=>byId[r.id]=r);
 function hasPhoto(id){return !!photos[id]}
 function photoBg(id){return photos[id]?`background-image:url("${photos[id]}")`:''}
@@ -250,6 +258,7 @@ async function loadState(){
   if(v=await sg('goals'))goals={...DEFAULT_GOALS,...JSON.parse(v)};
   if(v=await sg('morningOn'))morningOn=v==='1';
   if(v=await sg('skipMorning'))skipMorning=new Set(JSON.parse(v));
+  if(v=await sg('servings'))servings=JSON.parse(v);
 }
 const saveFavs=()=>ss('favs',JSON.stringify([...favs]));
 const saveCart=()=>ss('cart',JSON.stringify(cart));
@@ -258,6 +267,9 @@ const savePlan=()=>ss('plan',JSON.stringify(plan));
 const saveGoals=()=>ss('goals',JSON.stringify(goals));
 const saveMorning=()=>ss('morningOn',morningOn?'1':'0');
 const saveSkip=()=>ss('skipMorning',JSON.stringify([...skipMorning]));
+const saveServings=()=>ss('servings',JSON.stringify(servings));
+function servOf(r){return servings[r.id]||r.serves}
+function servFactor(r){return servOf(r)/r.serves}
 
 /* ---- foto's ---- */
 async function loadPhotos(){
@@ -314,7 +326,7 @@ function longDate(k){const d=parseKey(k);return `${WDF[d.getDay()]} ${d.getDate(
 
 /* ---- helpers ---- */
 function typeLabel(t){return t==="lunch"?"Lunch":t==="diner"?"Diner":t==="smoothie"?"Smoothie":"Lunch & diner"}
-function servesLabel(r){return r.serves===1?"1 portie":"voor 2"}
+function servesLabel(r){const s=servOf(r);return s===1?"1 portie":"voor "+s}
 function fmtQty(q,u){
   if(q==null)return"naar smaak";
   let n=Number.isInteger(q)?q:Math.round(q*100)/100;
@@ -398,8 +410,12 @@ function openDetail(id){
         <button class="da primary" data-list="${r.id}" data-on="${cartCount(r.id)>0}">${cartCount(r.id)>0?'✓ Op lijst':'＋ Boodschappen'}</button>
         <button class="da fav" data-fav="${r.id}" data-on="${favs.has(r.id)}">${heartSvg(favs.has(r.id))} ${favs.has(r.id)?'Favoriet':'Bewaar'}</button>
       </div>
+      <div class="portsel">
+        <span class="portlab">Personen</span>
+        <div class="portbtns">${[1,2,3,4].map(n=>`<button class="portbtn" data-serv="${n}" data-on="${servOf(r)===n}">${n}</button>`).join("")}</div>
+      </div>
       <div class="sec-title">Ingrediënten · ${esc(servesLabel(r))}</div>
-      <ul class="ingr">${r.ing.map(it=>`<li><span>${esc(it.n)}</span><span class="amt">${esc(it.q==null?'naar smaak':fmtQty(it.q,it.u))}</span></li>`).join("")}</ul>
+      <ul class="ingr">${r.ing.map(it=>`<li><span>${esc(it.n)}</span><span class="amt">${esc(it.q==null?'naar smaak':fmtQty(Math.round(it.q*servFactor(r)*100)/100,it.u))}</span></li>`).join("")}</ul>
       <div class="sec-title">Bereiding</div>
       <ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
       <div class="tip"><b>Tip.</b> ${esc(r.tip)}</div>
@@ -478,7 +494,7 @@ function renderPlanner(){
 /* ================= SHOPPING ================= */
 function buildShopping(){
   const items={};
-  Object.entries(cart).forEach(([id,cnt])=>{const r=byId[id];if(!r)return;r.ing.forEach(it=>{const key=it.n+"||"+it.u+"||"+it.c;if(!items[key])items[key]={n:it.n,u:it.u,c:it.c,q:0,naar:false};if(it.q==null)items[key].naar=true;else items[key].q+=it.q*cnt})});
+  Object.entries(cart).forEach(([id,cnt])=>{const r=byId[id];if(!r)return;const mult=cnt*servFactor(r);r.ing.forEach(it=>{const key=it.n+"||"+it.u+"||"+it.c;if(!items[key])items[key]={n:it.n,u:it.u,c:it.c,q:0,naar:false};if(it.q==null)items[key].naar=true;else items[key].q+=it.q*mult})});
   const order=["Groente & fruit","Noten & zaden","Granen & basis","Kruiden & specerijen","Vocht & olie","Overig"];
   const byCat={};order.forEach(c=>byCat[c]=[]);
   Object.entries(items).forEach(([key,v])=>{(byCat[v.c]=byCat[v.c]||[]).push({key,...v})});
@@ -597,6 +613,8 @@ function bind(){
   $('#sheet-body').addEventListener('click',e=>{
     const fav=e.target.closest('[data-fav]'),lst=e.target.closest('[data-list]'),pl=e.target.closest('[data-plan]');
     const cam=e.target.closest('[data-cam]'),delp=e.target.closest('[data-delphoto]');
+    const srv=e.target.closest('[data-serv]');
+    if(srv){const id=curDetail,n=+srv.dataset.serv;if(n===byId[id].serves)delete servings[id];else servings[id]=n;saveServings();openDetail(id);renderRecepten();if(view==='lijst')renderShopping();return}
     if(cam){const inp=$('#cam-input');if(inp)inp.click();return}
     if(delp){const id=curDetail;removePhoto(id).then(()=>{if(curDetail===id)openDetail(id);renderRecepten();if(view==='planner')renderPlanner();toast('Foto verwijderd')});return}
     if(fav){const id=+fav.dataset.fav;toggleFav(id);openDetail(id);renderRecepten();return}
